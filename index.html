@@ -1,0 +1,5277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>第三方 API 站点 CLI 配置教程</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f0f4ff;
+      --bg-gradient: linear-gradient(135deg, #e0e7ff 0%, #fce7f3 50%, #ddd6fe 100%);
+      --panel: #ffffff;
+      --panel-2: #fafbff;
+      --panel-hover: #f5f7ff;
+      --line: #d1d9f0;
+      --line-bright: #b8c5e8;
+      --text: #1e293b;
+      --muted: #475569;
+      --soft: #64748b;
+      --accent: #0ea5e9;
+      --accent-dark: #0284c7;
+      --accent-glow: rgba(14, 165, 233, 0.3);
+      --accent-2: #a855f7;
+      --accent-2-glow: rgba(168, 85, 247, 0.3);
+      --accent-3: #ec4899;
+      --accent-3-glow: rgba(236, 72, 153, 0.3);
+      --warn: #f59e0b;
+      --warn-glow: rgba(245, 158, 11, 0.3);
+      --danger: #ef4444;
+      --danger-glow: rgba(239, 68, 68, 0.3);
+      --success: #10b981;
+      --success-glow: rgba(16, 185, 129, 0.3);
+      --code: #f8fafc;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, .08);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, .12);
+      --shadow-lg: 0 16px 48px rgba(0, 0, 0, .15);
+      --shadow-glow: 0 0 32px rgba(14, 165, 233, 0.2);
+      --shadow-glow-purple: 0 0 32px rgba(168, 85, 247, 0.2);
+      --shadow-glow-pink: 0 0 32px rgba(236, 72, 153, 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg-gradient);
+      background-attachment: fixed;
+      color: var(--text);
+      font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* 自定义滚动条 */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      border-radius: 5px;
+      transition: background 0.2s ease;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, var(--accent-dark) 0%, var(--accent-2) 100%);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .shell {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 40px 24px 64px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 32px;
+      padding-bottom: 32px;
+      margin-bottom: 8px;
+      border-bottom: 2px solid var(--line);
+      position: relative;
+    }
+
+    .topbar::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 200px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 50%, var(--accent-3) 100%);
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+
+    .title-block {
+      max-width: 860px;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      display: inline-block;
+      padding: 4px 12px;
+      background: var(--accent-glow);
+      border-radius: 4px;
+      border: 1px solid var(--accent);
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+
+    h1 {
+      font-size: 38px;
+      line-height: 1.2;
+      margin-bottom: 16px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 50%, var(--accent-3) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 16px;
+      max-width: 800px;
+      line-height: 1.7;
+    }
+
+    .status {
+      min-width: 0;
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--panel) 0%, var(--panel-2) 100%);
+      color: var(--muted);
+      font-size: 13px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
+    }
+
+    .status:hover {
+      border-color: var(--line-bright);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .status strong {
+      display: block;
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 32px 0;
+      padding: 8px;
+      background: var(--panel);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .mode-switch {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 28px 0 0;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .status .mode-switch {
+      margin: 0;
+      justify-content: flex-end;
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+      padding: 0;
+      gap: 6px;
+    }
+
+    .mode-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      min-height: 0;
+      line-height: 1.2;
+      padding: 7px 12px;
+      font-weight: 800;
+      font-size: 14px;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+
+    .mode-btn.active {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      color: #fff;
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
+
+    .mode-page {
+      display: none;
+    }
+
+    body.mode-detailed .detailed-mode,
+    body.mode-simple .simple-mode {
+      display: block;
+    }
+
+    body.mode-detailed nav.tabs.detailed-mode,
+    body.mode-simple .simple-mode nav.tabs {
+      display: flex;
+    }
+
+    body.mode-detailed .notice-grid.detailed-mode {
+      display: grid;
+    }
+
+    body.mode-simple .detailed-mode {
+      display: none !important;
+    }
+
+    .simple-shell {
+      display: grid;
+      gap: 18px;
+      margin-top: 28px;
+    }
+
+    .simple-box {
+      border: 2px solid var(--line);
+      border-radius: 12px;
+      background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%);
+      padding: 18px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .simple-page {
+      display: none;
+    }
+
+    .simple-page.active {
+      display: grid;
+      gap: 18px;
+    }
+
+    .simple-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 12px;
+    }
+
+    .tab-btn {
+      border: 1px solid transparent;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--muted);
+      padding: 12px 20px;
+      cursor: pointer;
+      min-width: 140px;
+      font-weight: 600;
+      font-size: 15px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tab-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--accent-glow);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .tab-btn:hover:not(.active) {
+      background: var(--panel-hover);
+      color: var(--text);
+      border-color: var(--line);
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, #1a2540 0%, #2a1f4a 100%);
+      color: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 0 24px var(--accent-glow), var(--shadow-sm);
+      transform: translateY(-1px);
+    }
+
+    .tab-btn.active::before {
+      opacity: 1;
+    }
+
+    .notice-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .notice {
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--accent-2);
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--panel) 0%, var(--panel-2) 100%);
+      padding: 18px 20px;
+      color: var(--muted);
+      font-size: 14px;
+      box-shadow: var(--shadow-sm), 0 0 20px var(--accent-2-glow);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .notice::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: inherit;
+      filter: brightness(1.5);
+    }
+
+    .notice:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md), var(--shadow-glow-purple);
+      border-color: var(--line-bright);
+    }
+
+    .notice strong {
+      color: var(--text);
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .notice.warn {
+      border-left-color: var(--warn);
+      background: linear-gradient(135deg, var(--panel) 0%, rgba(251, 191, 36, 0.08) 100%);
+      box-shadow: var(--shadow-sm), 0 0 20px var(--warn-glow);
+    }
+
+    .notice.warn:hover {
+      box-shadow: var(--shadow-md), 0 0 32px var(--warn-glow);
+    }
+
+    .capability-box {
+      border: 2px solid var(--line);
+      border-radius: 14px;
+      background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%);
+      padding: 18px;
+      margin: 0 0 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .capability-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+
+    .capability-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .capability-desc {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .capability-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .capability-result {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .capability-card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel-2);
+      padding: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      min-height: 82px;
+    }
+
+    .capability-card strong {
+      display: block;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .capability-card.ok {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.1) 100%);
+    }
+
+    .capability-card.warn {
+      border-color: var(--warn);
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(217, 119, 6, 0.1) 100%);
+    }
+
+    .capability-card.bad {
+      border-color: var(--danger);
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(220, 38, 38, 0.1) 100%);
+    }
+
+    .flow-wizard {
+      margin: 32px 0;
+      border: 2px solid var(--line);
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(250, 251, 255, 0.96) 100%);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+    }
+
+    .flow-wizard-head {
+      padding: 20px 22px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.08) 0%, rgba(168, 85, 247, 0.08) 100%);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .flow-wizard-title {
+      color: var(--text);
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .flow-wizard-desc {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .flow-tools {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      min-width: 190px;
+    }
+
+    .wizard-nav {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 20px 18px 12px;
+      overflow-x: auto;
+    }
+
+    .wizard-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      min-width: 120px;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 0;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .wizard-step:hover {
+      color: var(--accent);
+    }
+
+    .wizard-circle {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: 2px solid var(--line);
+      border-radius: 50%;
+      background: var(--panel);
+      color: var(--muted);
+      font-weight: 900;
+      transition: all 0.2s ease;
+    }
+
+    .wizard-step.active .wizard-circle {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      color: #fff;
+      box-shadow: 0 0 0 6px rgba(14, 165, 233, 0.12), 0 0 18px var(--accent-glow);
+      transform: translateY(-2px);
+    }
+
+    .wizard-step.completed .wizard-circle {
+      border-color: var(--success);
+      background: var(--success);
+      color: #fff;
+    }
+
+    .wizard-step.ready .wizard-circle {
+      border-color: var(--success);
+      color: var(--success);
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, #ffffff 100%);
+    }
+
+    .wizard-step.blocked .wizard-circle {
+      border-color: var(--warn);
+      color: var(--warn);
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, #ffffff 100%);
+    }
+
+    .wizard-label {
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .wizard-step.active .wizard-label {
+      color: var(--accent);
+      font-weight: 900;
+    }
+
+    .wizard-connector {
+      flex: 1 0 34px;
+      height: 2px;
+      min-width: 34px;
+      background: var(--line);
+      transform: translateY(-17px);
+    }
+
+    .wizard-connector.completed {
+      background: linear-gradient(90deg, var(--success), var(--accent));
+    }
+
+    .flow-wizard-status {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      gap: 14px;
+      padding: 0 22px 20px;
+    }
+
+    .flow-tip,
+    .flow-summary {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel);
+      padding: 14px;
+    }
+
+    .flow-tip {
+      border-left: 4px solid var(--accent);
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.06) 0%, #ffffff 100%);
+    }
+
+    .flow-tip strong,
+    .flow-summary strong {
+      display: block;
+      color: var(--text);
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .flow-tip p,
+    .flow-summary li {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .flow-summary ul {
+      display: grid;
+      gap: 6px;
+      padding-left: 18px;
+    }
+
+    .final-checklist {
+      display: none;
+      margin: 0 22px 20px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel);
+      padding: 14px;
+    }
+
+    body.flow-test .final-checklist {
+      display: block;
+    }
+
+    .final-checklist strong {
+      display: block;
+      color: var(--text);
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .final-checklist-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .check-item {
+      border: 1px solid var(--line);
+      border-left-width: 4px;
+      border-radius: 8px;
+      padding: 9px 10px;
+      color: var(--muted);
+      font-size: 13px;
+      background: #fff;
+    }
+
+    .check-item.ok {
+      border-left-color: var(--success);
+      color: #047857;
+    }
+
+    .check-item.warn {
+      border-left-color: var(--warn);
+      color: #92400e;
+    }
+
+    .check-item.error {
+      border-left-color: var(--danger);
+      color: #991b1b;
+    }
+
+    .site-footer {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 24px 36px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .footer-check {
+      border-top: 1px solid var(--line);
+      padding-top: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .footer-check-title {
+      color: var(--text);
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .footer-check-note {
+      color: var(--muted);
+    }
+
+    .copyright {
+      color: var(--soft);
+    }
+
+    .field-attention {
+      border-color: var(--danger) !important;
+      box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.14) !important;
+    }
+
+    .flow-wizard-body {
+      padding: 22px;
+      border-top: 2px solid var(--line);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.82) 0%, rgba(245, 247, 255, 0.82) 100%);
+    }
+
+    .flow-wizard-body > .capability-box {
+      margin: 0;
+      border-color: var(--line-bright);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .flow-wizard-body > .page.active {
+      display: block;
+    }
+
+    .flow-wizard-body .page-head {
+      margin-bottom: 18px;
+    }
+
+    .flow-wizard-body .page.active .panel {
+      border-color: var(--line-bright);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .output-card .code.empty-output {
+      display: grid;
+      place-items: center;
+      min-height: 96px;
+      color: var(--soft);
+      background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+      border-top: 1px dashed var(--line-bright);
+      text-align: center;
+      white-space: normal;
+      font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+    }
+
+    .wizard-buttons {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 22px;
+      border-top: 1px solid var(--line);
+      background: rgba(250, 251, 255, 0.78);
+    }
+
+    body.flow-detect .page,
+    body.flow-windows .capability-box,
+    body.flow-config .capability-box,
+    body.flow-test .capability-box {
+      display: none !important;
+    }
+
+    body.flow-detect .capability-box {
+      display: block !important;
+    }
+
+    body.flow-windows .page.active .main-grid,
+    body.flow-config .page.active .main-grid,
+    body.flow-test .page.active .main-grid {
+      grid-template-columns: 1fr;
+    }
+
+    body.flow-test .page.active .page-head {
+      display: none;
+    }
+
+    body.flow-windows .page.active .main-grid .panel:nth-child(2),
+    body.flow-config .page.active .main-grid .panel:nth-child(1),
+    body.flow-config .page.active .tester,
+    body.flow-test .page.active .main-grid .panel:nth-child(1),
+    body.flow-test .page.active .main-grid .panel:nth-child(2) > :not(.tester) {
+      display: none;
+    }
+
+    body.flow-test .page.active .main-grid .panel:nth-child(2) {
+      padding: 0;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    body.flow-test .page.active .tester {
+      margin-top: 0;
+    }
+
+    .tab-status {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      margin-left: 6px;
+      padding: 0 6px;
+      font-size: 12px;
+      background: rgba(255, 255, 255, 0.75);
+      color: var(--soft);
+    }
+
+    .page {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .page-head {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .summary,
+    .compat {
+      border: 2px solid var(--line);
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--panel) 0%, var(--panel-2) 100%);
+      padding: 28px;
+      box-shadow: var(--shadow-md);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .summary::before,
+    .compat::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 50%, var(--accent-3) 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .summary:hover,
+    .compat:hover {
+      border-color: var(--line-bright);
+      box-shadow: var(--shadow-lg), var(--shadow-glow);
+      transform: translateY(-2px);
+    }
+
+    .summary:hover::before,
+    .compat:hover::before {
+      opacity: 1;
+    }
+
+    h2 {
+      font-size: 28px;
+      line-height: 1.3;
+      margin-bottom: 14px;
+      font-weight: 700;
+      color: var(--text);
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    h3 {
+      font-size: 21px;
+      line-height: 1.3;
+      margin-bottom: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .summary p,
+    .compat p {
+      color: var(--muted);
+      margin-bottom: 14px;
+      line-height: 1.7;
+    }
+
+    .summary p:last-child,
+    .compat p:last-child {
+      margin-bottom: 0;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 32px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      padding: 6px 14px;
+      color: var(--muted);
+      background: var(--panel-2);
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .badge:hover {
+      border-color: var(--accent-2);
+      color: var(--accent-2);
+      background: var(--accent-2-glow);
+      transform: translateY(-1px);
+      box-shadow: 0 0 16px var(--accent-2-glow);
+    }
+
+    .main-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .panel {
+      border: 2px solid var(--line);
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--panel) 0%, var(--panel-2) 100%);
+      padding: 28px;
+      box-shadow: var(--shadow-md);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      pointer-events: none;
+    }
+
+    .panel:hover {
+      border-color: var(--line-bright);
+      box-shadow: var(--shadow-lg), var(--shadow-glow);
+    }
+
+    .panel:hover::before {
+      opacity: 0.3;
+    }
+
+    /* 折叠面板 */
+    .collapsible-section {
+      border: 2px solid var(--line);
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--panel) 0%, var(--panel-2) 100%);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .collapsible-section:hover {
+      border-color: var(--line-bright);
+      box-shadow: var(--shadow-lg), var(--shadow-glow);
+    }
+
+    .collapsible-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 28px;
+      cursor: pointer;
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%);
+      border-bottom: 2px solid var(--line);
+      transition: all 0.3s ease;
+      user-select: none;
+    }
+
+    .collapsible-header:hover {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+    }
+
+    .collapsible-header.active {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      color: white;
+    }
+
+    .collapsible-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .collapsible-header.active .collapsible-title {
+      color: white;
+    }
+
+    .collapsible-icon {
+      font-size: 20px;
+      transition: transform 0.3s ease;
+    }
+
+    .collapsible-header.active .collapsible-icon {
+      transform: rotate(180deg);
+    }
+
+    .collapsible-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease;
+    }
+
+    .collapsible-content.active {
+      max-height: 5000px;
+    }
+
+    .collapsible-body {
+      padding: 28px;
+    }
+
+    /* 步骤提示卡片 */
+    .steps-hint {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.08) 0%, rgba(168, 85, 247, 0.08) 100%);
+      border: 2px solid var(--accent);
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+    }
+
+    .steps-hint-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .steps-hint-list {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .steps-hint-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .steps-hint-item::before {
+      content: '→';
+      color: var(--accent);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .steps {
+      list-style: none;
+      display: grid;
+      gap: 20px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 40px minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+      padding: 16px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%);
+      transition: all 0.3s ease;
+      border: 1px solid transparent;
+    }
+
+    .step:hover {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+      transform: translateX(4px);
+      border-color: var(--accent);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .num {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e0f2fe 0%, #ede9fe 100%);
+      border: 2px solid var(--accent);
+      color: var(--accent);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+      box-shadow: 0 0 20px var(--accent-glow);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .num::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      opacity: 0;
+      z-index: -1;
+      transition: opacity 0.3s ease;
+    }
+
+    .step:hover .num {
+      transform: scale(1.15) rotate(5deg);
+      box-shadow: 0 0 32px var(--accent-glow);
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      color: white;
+    }
+
+    .step:hover .num::before {
+      opacity: 0.3;
+    }
+
+    .step-title {
+      color: var(--text);
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .step p {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 10px;
+      line-height: 1.6;
+    }
+
+    .code {
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border: 2px solid var(--line);
+      border-radius: 10px;
+      color: #059669;
+      font-family: Consolas, "Cascadia Mono", "Courier New", monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      min-height: 48px;
+      overflow: auto;
+      padding: 14px 16px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .code::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent-glow) 0%, var(--accent-2-glow) 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    .code:hover {
+      border-color: var(--accent);
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05), 0 0 20px var(--accent-glow);
+    }
+
+    .code:hover::before {
+      opacity: 0.15;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    .label-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .help-btn {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      background: linear-gradient(135deg, #ffffff 0%, #f5f7ff 100%);
+      color: var(--accent);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1;
+      padding: 0;
+      transition: all 0.2s ease;
+    }
+
+    .help-btn:hover {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      color: white;
+      transform: translateY(-1px);
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+
+    input,
+    select {
+      width: 100%;
+      border: 2px solid var(--line);
+      border-radius: 10px;
+      background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%);
+      color: var(--text);
+      min-height: 46px;
+      padding: 11px 14px;
+      outline: none;
+      transition: all 0.3s ease;
+      font-size: 14px;
+    }
+
+    input::placeholder {
+      color: #94a3b8;
+      opacity: 1;
+    }
+
+    input:hover,
+    select:hover {
+      border-color: var(--line-bright);
+      background: #ffffff;
+      box-shadow: 0 0 12px rgba(14, 165, 233, 0.1);
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--accent);
+      background: #ffffff;
+      box-shadow: 0 0 0 4px var(--accent-glow), 0 0 16px var(--accent-glow);
+      transform: translateY(-1px);
+    }
+
+    .hint {
+      color: var(--soft);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .validation-list {
+      grid-column: 1 / -1;
+      display: grid;
+      gap: 8px;
+      margin-top: -4px;
+    }
+
+    .validation-item {
+      border: 1px solid var(--line);
+      border-left-width: 4px;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.5;
+      background: #ffffff;
+    }
+
+    .validation-item.error {
+      border-left-color: var(--danger);
+      color: #991b1b;
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(220, 38, 38, 0.1) 100%);
+    }
+
+    .validation-item.warn {
+      border-left-color: var(--warn);
+      color: #92400e;
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(217, 119, 6, 0.1) 100%);
+    }
+
+    .validation-item.ok {
+      border-left-color: var(--accent);
+      color: #047857;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.1) 100%);
+    }
+
+    .validation-head {
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--accent);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.1) 100%);
+      color: #047857;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .validation-head.warn {
+      border-left-color: var(--warn);
+      color: #92400e;
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(217, 119, 6, 0.1) 100%);
+    }
+
+    .validation-head.error {
+      border-left-color: var(--danger);
+      color: #991b1b;
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(220, 38, 38, 0.1) 100%);
+    }
+
+    .output-list {
+      display: grid;
+      gap: 16px;
+    }
+
+    .output-card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel-2);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
+    }
+
+    .output-card:hover {
+      border-color: var(--line-bright);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .output-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .output-title {
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .copy-btn {
+      border: 2px solid var(--accent);
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      color: white;
+      cursor: pointer;
+      min-height: 36px;
+      min-width: 72px;
+      padding: 8px 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px var(--accent-glow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .copy-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, white 0%, white 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .copy-btn:hover {
+      background: linear-gradient(135deg, var(--accent-dark) 0%, var(--accent-2) 100%);
+      box-shadow: 0 6px 20px var(--accent-glow);
+      transform: translateY(-2px);
+    }
+
+    .copy-btn:hover::before {
+      opacity: 0.1;
+    }
+
+    .copy-btn:active {
+      transform: translateY(0);
+    }
+
+    .output-card .code {
+      border: 0;
+      border-radius: 0;
+      min-height: 120px;
+    }
+
+    .checklist {
+      margin-top: 20px;
+      border-top: 1px solid var(--line);
+      padding-top: 20px;
+    }
+
+    .checklist ul {
+      color: var(--muted);
+      padding-left: 20px;
+      display: grid;
+      gap: 10px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .checklist li {
+      transition: all 0.3s ease;
+      padding-left: 8px;
+    }
+
+    .checklist li:hover {
+      color: var(--text);
+      transform: translateX(4px);
+    }
+
+    .inline-note {
+      color: var(--warn);
+      font-size: 13px;
+      margin-top: 12px;
+      padding: 12px 16px;
+      background: var(--warn-glow);
+      border-left: 3px solid var(--warn);
+      border-radius: 8px;
+      line-height: 1.6;
+    }
+
+    .save-box {
+      border: 2px solid var(--line);
+      border-radius: 10px;
+      background: linear-gradient(135deg, #fafbff 0%, #f5f7ff 100%);
+      margin-bottom: 20px;
+      padding: 18px;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.03);
+    }
+
+    .save-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 10px;
+    }
+
+    .saved-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .saved-item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel-2);
+      padding: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .saved-item.pinned {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, #ffffff 100%);
+    }
+
+    .saved-item:hover {
+      border-color: var(--line-bright);
+      background: var(--panel-hover);
+      transform: translateX(4px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .saved-name {
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 800;
+      word-break: break-word;
+    }
+
+    .saved-name .pin-mark {
+      color: var(--accent);
+      margin-right: 6px;
+    }
+
+    .saved-meta {
+      color: var(--soft);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .saved-detail {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 8px;
+      word-break: break-word;
+      line-height: 1.5;
+    }
+
+    .saved-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .small-btn {
+      border: 2px solid var(--line);
+      border-radius: 8px;
+      background: linear-gradient(135deg, #ffffff 0%, #f5f7ff 100%);
+      color: var(--text);
+      cursor: pointer;
+      min-height: 34px;
+      padding: 6px 12px;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.3s ease;
+    }
+
+    .small-btn:hover {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      border-color: var(--accent);
+      color: white;
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm), 0 0 16px var(--accent-glow);
+    }
+
+    .small-btn:active {
+      transform: translateY(0);
+    }
+
+    .danger-btn {
+      border-color: var(--danger);
+      background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+      color: var(--danger);
+    }
+
+    .danger-btn:hover {
+      background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+      border-color: var(--danger);
+      color: white;
+      box-shadow: 0 0 16px var(--danger-glow);
+    }
+
+    .empty-state {
+      border: 2px dashed var(--line);
+      border-radius: 8px;
+      color: var(--soft);
+      font-size: 13px;
+      padding: 14px;
+      text-align: center;
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.03) 0%, rgba(168, 85, 247, 0.03) 100%);
+    }
+
+    .tester {
+      margin-top: 20px;
+      border: 2px solid var(--line);
+      border-radius: 12px;
+      background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%);
+      padding: 18px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .tester-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .tester-title {
+      color: var(--text);
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .tester-desc {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .tester-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .tester-actions .small-btn {
+      min-height: 32px;
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+
+    .model-chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .model-chip {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 12px;
+      padding: 4px 8px;
+    }
+
+    .model-chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .test-result {
+      margin-top: 12px;
+      border: 2px solid var(--line);
+      border-radius: 10px;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      padding: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+      min-height: 48px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .test-result.success {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.12) 100%);
+      color: #047857;
+    }
+
+    .test-result.error {
+      border-color: var(--danger);
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(220, 38, 38, 0.12) 100%);
+      color: #991b1b;
+    }
+
+    .test-result.warn {
+      border-color: var(--warn);
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(217, 119, 6, 0.12) 100%);
+      color: #92400e;
+    }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      transform: translateY(20px);
+      opacity: 0;
+      pointer-events: none;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      border: 2px solid white;
+      border-radius: 10px;
+      color: white;
+      padding: 14px 20px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 20;
+      box-shadow: 0 8px 32px var(--accent-glow), var(--shadow-lg);
+      font-weight: 600;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* 载入配置模态框 */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal {
+      background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%);
+      border: 2px solid var(--accent);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 40px var(--accent-glow);
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow: auto;
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.show .modal {
+      transform: scale(1);
+    }
+
+    .modal-header {
+      padding: 24px 28px;
+      border-bottom: 2px solid var(--line);
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      border-radius: 14px 14px 0 0;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: white;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .modal-body {
+      padding: 28px;
+    }
+
+    .modal-section {
+      margin-bottom: 24px;
+    }
+
+    .modal-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .modal-section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-section-content {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .modal-code {
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border: 2px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-family: Consolas, "Cascadia Mono", "Courier New", monospace;
+      font-size: 13px;
+      color: var(--text);
+      margin-top: 8px;
+      word-break: break-all;
+      position: relative;
+    }
+
+    .modal-highlight {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+      border: 2px solid var(--accent);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 8px;
+    }
+
+    .modal-highlight-text {
+      color: var(--text);
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .modal-footer {
+      padding: 20px 28px;
+      border-top: 2px solid var(--line);
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      background: linear-gradient(135deg, #fafbff 0%, #f5f7ff 100%);
+      border-radius: 0 0 14px 14px;
+    }
+
+    .modal-btn {
+      border: 2px solid var(--accent);
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      color: white;
+      cursor: pointer;
+      min-height: 40px;
+      padding: 10px 20px;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .modal-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px var(--accent-glow);
+    }
+
+    .modal-btn-secondary {
+      background: linear-gradient(135deg, #ffffff 0%, #f5f7ff 100%);
+      color: var(--text);
+      border-color: var(--line);
+      box-shadow: none;
+    }
+
+    .modal-btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    code {
+      color: #059669;
+      font-family: Consolas, "Cascadia Mono", "Courier New", monospace;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.15) 100%);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.95em;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    a {
+      color: var(--accent-2);
+      text-decoration: none;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    a::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--accent-2);
+      transition: width 0.3s ease;
+    }
+
+    a:hover {
+      color: #7ac9f5;
+    }
+
+    a:hover::after {
+      width: 100%;
+    }
+
+    @media (max-width: 980px) {
+      .flow-wizard-status {
+        grid-template-columns: 1fr;
+      }
+
+      .flow-wizard-head {
+        display: grid;
+      }
+
+      .flow-tools {
+        justify-content: flex-start;
+      }
+
+      .topbar,
+      .page-head,
+      .main-grid,
+      .notice-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .capability-grid,
+      .capability-result {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        display: grid;
+      }
+
+      .status {
+        min-width: 0;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .flow-wizard {
+        margin: 22px 0;
+      }
+
+      .flow-wizard-head,
+      .flow-wizard-body,
+      .wizard-buttons {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      .wizard-nav {
+        padding: 16px 10px 8px;
+      }
+
+      .wizard-step {
+        min-width: 86px;
+        gap: 6px;
+      }
+
+      .wizard-circle {
+        width: 34px;
+        height: 34px;
+        font-size: 12px;
+      }
+
+      .wizard-label {
+        font-size: 12px;
+      }
+
+      .wizard-connector {
+        flex-basis: 18px;
+        min-width: 18px;
+        transform: translateY(-15px);
+      }
+
+      .wizard-buttons {
+        display: grid;
+      }
+
+      .tester-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .tester-actions .copy-btn,
+      .tester-actions .small-btn {
+        width: 100%;
+      }
+
+      .final-checklist-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .shell {
+        padding: 24px 16px 48px;
+      }
+
+      h1 {
+        font-size: 30px;
+      }
+
+      h2 {
+        font-size: 24px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .save-row,
+      .saved-item {
+        grid-template-columns: 1fr;
+      }
+
+      .saved-buttons {
+        justify-content: flex-start;
+      }
+
+      .tester-head {
+        display: grid;
+      }
+
+      .tester-actions {
+        justify-content: flex-start;
+      }
+
+      .tab-btn {
+        flex: 1 1 100%;
+      }
+
+      .tabs {
+        padding: 6px;
+      }
+    }
+  </style>
+</head>
+
+<body class="mode-detailed">
+  <main class="shell">
+    <header class="topbar">
+      <div class="title-block">
+        <div class="eyebrow">CLI 第三方 API 配置</div>
+        <h1>Claude Code、Codex CLI、Gemini CLI<br>API中转站配置教程</h1>
+        <p class="subtitle">面向 Windows 用户，按第三方 API 站点提供的 Base URL、API Key 和模型名生成配置。教程优先使用各 CLI 当前稳定的配置入口，并把容易失效的协议差异写清楚。</p>
+      </div>
+      <div class="status">
+        <div class="mode-switch" aria-label="教程模式选择">
+          <button class="mode-btn active" type="button" id="detailedModeBtn" onclick="switchTutorialMode('detailed')">详细版</button>
+          <button class="mode-btn" type="button" id="simpleModeBtn" onclick="switchTutorialMode('simple')">精简版</button>
+        </div>
+      </div>
+    </header>
+
+    <nav class="tabs detailed-mode mode-page" aria-label="CLI 选择">
+      <button class="tab-btn active" type="button" id="claudeTab" onclick="switchPage('claude')">Claude Code <span class="tab-status" id="claudeTabStatus">未测</span></button>
+      <button class="tab-btn" type="button" id="codexTab" onclick="switchPage('codex')">Codex CLI <span class="tab-status" id="codexTabStatus">未测</span></button>
+      <button class="tab-btn" type="button" id="geminiTab" onclick="switchPage('gemini')">Gemini CLI <span class="tab-status" id="geminiTabStatus">未测</span></button>
+    </nav>
+
+    <section class="notice-grid detailed-mode mode-page" aria-label="通用注意事项">
+      <div class="notice">
+        <strong>Base URL 填写到协议根路径</strong>
+        不要填完整请求端点。Codex/OpenAI 兼容通常填到 <code>/v1</code>；Claude/Anthropic 兼容通常填到 <code>/v1/messages</code> 前一级，具体以站点文档为准。
+      </div>
+      <div class="notice warn">
+        <strong>模型名必须用站点给出的原始值</strong>
+        不要自己猜模型名。CLI 只会把请求发出去，模型是否存在由第三方站点决定。
+      </div>
+      <div class="notice">
+        <strong>先小请求测试</strong>
+        配好后先执行一个简单提问，确认鉴权、协议和模型都可用，再放到正式项目里使用。
+      </div>
+    </section>
+
+    <section class="flow-wizard detailed-mode mode-page" aria-label="引导式配置流程">
+      <div class="flow-wizard-head">
+        <div>
+          <div class="flow-wizard-title">引导式配置流程</div>
+        <div class="flow-wizard-desc">按顺序完成识别协议、查看步骤、生成配置、测试连通。内容会跟随当前 CLI 标签自动切换。</div>
+        </div>
+        <div class="flow-tools">
+          <button class="small-btn" type="button" onclick="exportSavedConfigs(false)">导出配置</button>
+          <button class="small-btn" type="button" onclick="exportSavedConfigs(true)">导出含 Key</button>
+          <button class="small-btn" type="button" onclick="triggerImportConfigs()">导入配置</button>
+          <input id="importConfigFile" type="file" accept="application/json,.json" hidden>
+        </div>
+      </div>
+      <nav class="wizard-nav" id="flowWizardNav" aria-label="配置步骤"></nav>
+      <div class="flow-wizard-status">
+        <div class="flow-tip">
+          <strong id="flowTipTitle">当前步骤</strong>
+          <p id="flowTipText">先确认第三方站点支持哪种协议。</p>
+        </div>
+        <div class="flow-summary">
+          <strong>当前摘要</strong>
+          <ul id="flowSummaryList"></ul>
+        </div>
+      </div>
+      <div class="flow-wizard-body">
+
+    <section class="capability-box" id="capabilityGuide" aria-label="站点能力自动识别">
+      <div class="capability-head">
+        <div>
+          <div class="capability-title">不确定站点支持哪种协议？</div>
+          <div class="capability-desc">输入同一个中转站的 Base URL、API Key 和模型名，自动尝试 Anthropic Messages、OpenAI Responses、OpenAI Chat Completions、Gemini generateContent，并给出可用 CLI 建议。</div>
+        </div>
+        <div class="field" style="min-width: 190px;">
+          <label for="platformMode">脚本平台</label>
+          <select id="platformMode">
+            <option value="powershell" selected>Windows PowerShell</option>
+            <option value="bash">macOS / Linux Bash</option>
+          </select>
+        </div>
+      </div>
+      <div class="capability-grid">
+        <div class="field">
+          <label for="detectBaseUrl">Base URL</label>
+          <input id="detectBaseUrl" placeholder="https://your-api-site.example.com/v1">
+        </div>
+        <div class="field">
+          <label for="detectApiKey">API Key</label>
+          <input id="detectApiKey" placeholder="sk-your-key">
+        </div>
+        <div class="field">
+          <label for="detectModel">模型名</label>
+          <input id="detectModel" placeholder="gpt-5.1-codex">
+        </div>
+        <div class="tester-actions">
+          <button class="copy-btn" type="button" onclick="detectCapabilities()">自动识别</button>
+          <button class="small-btn" type="button" onclick="copyCapabilityScript()">复制识别脚本</button>
+        </div>
+      </div>
+      <div class="capability-result" id="capabilityResult">
+        <div class="capability-card"><strong>Claude Code</strong>未识别</div>
+        <div class="capability-card"><strong>Codex CLI</strong>未识别</div>
+        <div class="capability-card"><strong>OpenAI SDK</strong>未识别</div>
+        <div class="capability-card"><strong>Gemini CLI</strong>未识别</div>
+      </div>
+    </section>
+
+    <section class="page active" id="claudePage">
+      <div class="page-head">
+        <div class="summary">
+          <h2>Claude Code 连接 Anthropic 兼容站点</h2>
+          <p>Claude Code 最稳的第三方站点配置方式，是在用户级 <code>settings.json</code> 里写入环境变量。这样每次运行 <code>claude</code> 都会自动携带 Base URL、API Key 和模型名。</p>
+          <div class="badge-row">
+            <span class="badge">配置文件：%USERPROFILE%\.claude\settings.json</span>
+            <span class="badge">协议：Anthropic / Claude 兼容</span>
+          </div>
+        </div>
+        <div class="compat">
+          <h3>站点兼容性</h3>
+          <p>第三方站点需要支持 Claude / Anthropic 风格接口。只提供 OpenAI 兼容接口的站点，不能直接按这页配置 Claude Code，除非站点明确提供 Claude 兼容转发。</p>
+        </div>
+      </div>
+
+      <div class="main-grid">
+        <div class="panel">
+          <h3>Windows 步骤</h3>
+          <ol class="steps">
+            <li class="step">
+              <span class="num">1</span>
+              <div>
+                <div class="step-title">创建配置目录</div>
+                <p>PowerShell 执行：</p>
+                <div class="code">New-Item -ItemType Directory -Force "$env:USERPROFILE\.claude"</div>
+              </div>
+            </li>
+            <li class="step">
+              <span class="num">2</span>
+              <div>
+                <div class="step-title">打开用户级配置文件</div>
+                <p>如果文件不存在，记事本会询问是否创建。</p>
+                <div class="code">notepad "$env:USERPROFILE\.claude\settings.json"</div>
+              </div>
+            </li>
+            <li class="step">
+              <span class="num">3</span>
+              <div>
+                <div class="step-title">粘贴右侧生成的 JSON</div>
+                <p>保存后重新打开终端，让新环境变量生效。</p>
+              </div>
+            </li>
+            <li class="step">
+              <span class="num">4</span>
+              <div>
+                <div class="step-title">启动并测试</div>
+                <div class="code">claude</div>
+              </div>
+            </li>
+          </ol>
+          <div class="checklist">
+            <h3>排查点</h3>
+            <ul>
+              <li>401 / Unauthorized：API Key、额度或站点分组权限不对。</li>
+              <li>404 / model not found：模型名和站点后台不一致。</li>
+              <li>连接失败：Base URL 路径不对，或站点不支持 Anthropic 兼容协议。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>配置生成器</h3>
+          <div class="save-box">
+            <div class="save-row">
+              <div class="field">
+                <label for="claudeSaveName">保存名称</label>
+                <input id="claudeSaveName" placeholder="Claude 第三方站点">
+              </div>
+              <button class="copy-btn" type="button" onclick="saveConfig('claude')">新增到保存列表</button>
+              <button class="small-btn" type="button" onclick="overwriteLoadedConfig('claude')">覆盖当前载入</button>
+            </div>
+            <div class="hint">保存到当前浏览器本地；包含 API Key，建议仅在个人电脑使用。</div>
+            <div class="saved-list" id="claudeSavedList"></div>
+          </div>
+          <div class="form-grid">
+            <div class="field full">
+              <label for="claudeBaseUrl">Base URL</label>
+              <input id="claudeBaseUrl" placeholder="https://your-claude-site.example.com">
+              <div class="hint">填到 Anthropic 协议根路径，不要填完整 endpoint。若站点文档给的是 <code>https://example.com/anthropic/v1/messages</code>，这里填 <code>https://example.com/anthropic</code>；若文档明确要求带 <code>/v1</code>，按站点文档填写。</div>
+              <button class="small-btn" type="button" onclick="normalizeUrl('claude')">一键修正 URL</button>
+            </div>
+            <div class="field">
+              <label for="claudeApiKey">API Key</label>
+              <input id="claudeApiKey" placeholder="sk-your-key">
+            </div>
+            <div class="field">
+              <label for="claudeModel">模型名</label>
+              <input id="claudeModel" placeholder="claude-sonnet-4-5">
+              <div class="model-chip-row" id="claudeModelFavorites"></div>
+            </div>
+            <div class="validation-list" id="claudeValidation"></div>
+          </div>
+          <div class="output-list">
+            <div class="output-card">
+              <div class="output-head">
+                <div class="output-title">%USERPROFILE%\.claude\settings.json</div>
+                <button class="copy-btn" type="button" onclick="copyText('claudeOutput')">复制</button>
+              </div>
+              <div class="code" id="claudeOutput"></div>
+            </div>
+          </div>
+          <div class="tester">
+            <div class="tester-head">
+              <div>
+                <div class="tester-title">API Key 连通性测试</div>
+                <div class="tester-desc">使用当前 Base URL、API Key 和模型名发送最小 Messages 请求。浏览器测试可能被 CORS 拦截，PowerShell 命令结果更可靠。</div>
+              </div>
+              <div class="tester-actions">
+                <button class="copy-btn" type="button" onclick="testApi('claude')">测试当前配置</button>
+                <button class="small-btn" type="button" onclick="copyTestCommand('claude')">复制测试命令</button>
+                <button class="small-btn" type="button" onclick="copyApplyScript('claude')">复制一键配置脚本</button>
+                <button class="small-btn" type="button" onclick="copySupportInfo('claude')">复制排错信息</button>
+                <button class="small-btn" type="button" onclick="clearTestResult('claude')">清空结果</button>
+              </div>
+            </div>
+            <div class="test-result" id="claudeTestResult">尚未测试。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" id="codexPage">
+      <div class="page-head">
+        <div class="summary">
+          <h2>Codex CLI 连接 OpenAI 兼容站点</h2>
+          <p>Codex 的稳定配置入口是 <code>%USERPROFILE%\.codex\config.toml</code>。第三方站点需要兼容 OpenAI Responses API；如果站点只支持旧 Chat Completions，当前 Codex 可能无法稳定工作。</p>
+          <div class="badge-row">
+            <span class="badge">配置文件：%USERPROFILE%\.codex\config.toml</span>
+            <span class="badge">密钥环境变量：OPENAI_API_KEY</span>
+            <span class="badge">协议：OpenAI Responses</span>
+          </div>
+        </div>
+        <div class="compat">
+          <h3>站点兼容性</h3>
+          <p>向站点确认它支持 <code>/v1/responses</code>。只写 <code>/v1/chat/completions</code> 兼容的站点，适合普通 OpenAI SDK，不一定适合 Codex CLI。</p>
+        </div>
+      </div>
+
+      <div class="main-grid">
+        <div class="panel">
+          <h3>Windows 步骤</h3>
+          <ol class="steps">
+            <li class="step">
+              <span class="num">1</span>
+              <div>
+                <div class="step-title">保存 API Key 到用户环境变量</div>
+                <p>执行右侧生成的 PowerShell 命令后，重新打开终端。</p>
+              </div>
+            </li>
+            <li class="step">
+              <span class="num">2</span>
+              <div>
+                <div class="step-title">创建 Codex 配置目录</div>
+                <div class="code">New-Item -ItemType Directory -Force "$env:USERPROFILE\.codex"</div>
+              </div>
+            </li>
+            <li class="step">
+              <span class="num">3</span>
+              <div>
+                <div class="step-title">打开配置文件</div>
+                <div class="code">notepad "$env:USERPROFILE\.codex\config.toml"</div>
+              </div>
+            </li>
+            <li class="step">
+              <span class="num">4</span>
+              <div>
+                <div class="step-title">粘贴右侧生成的 TOML 并测试</div>
+                <div class="code">codex</div>
+              </div>
+            </li>
+          </ol>
+          <div class="checklist">
+            <h3>排查点</h3>
+            <ul>
+              <li>启动后仍走官方账号：检查 <code>model_provider</code> 是否等于自定义 provider 名。</li>
+              <li>404 / unsupported endpoint：第三方站点不支持 Responses API 或 Base URL 少了 <code>/v1</code>。</li>
+              <li>TOML 解析失败：模型名、URL 或 key 里有特殊字符时重新用生成器生成。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>配置生成器</h3>
+          <div class="save-box">
+            <div class="save-row">
+              <div class="field">
+                <label for="codexSaveName">保存名称</label>
+                <input id="codexSaveName" placeholder="Codex 第三方站点">
+              </div>
+              <button class="copy-btn" type="button" onclick="saveConfig('codex')">新增到保存列表</button>
+              <button class="small-btn" type="button" onclick="overwriteLoadedConfig('codex')">覆盖当前载入</button>
+            </div>
+            <div class="hint">保存到当前浏览器本地；包含 API Key，建议仅在个人电脑使用。</div>
+            <div class="saved-list" id="codexSavedList"></div>
+          </div>
+          <div class="form-grid">
+            <div class="field full">
+              <label for="codexBaseUrl">Base URL</label>
+              <input id="codexBaseUrl" placeholder="https://your-openai-site.example.com/v1">
+              <div class="hint">填到 OpenAI 兼容根路径，通常要带 <code>/v1</code>，不要填 <code>/responses</code> 或 <code>/chat/completions</code>。示例：<code>https://example.com/v1</code>。</div>
+              <button class="small-btn" type="button" onclick="normalizeUrl('codex')">一键修正 URL</button>
+            </div>
+            <div class="field">
+              <label for="codexApiKey">API Key</label>
+              <input id="codexApiKey" placeholder="sk-your-key">
+            </div>
+            <div class="field">
+              <label for="codexModel">模型名</label>
+              <input id="codexModel" placeholder="gpt-5.1-codex">
+              <div class="model-chip-row" id="codexModelFavorites"></div>
+            </div>
+            <div class="field">
+              <label for="codexContextPreset">上下文预设</label>
+              <select id="codexContextPreset">
+                <option value="">手动填写</option>
+                <option value="128000">128K / 自动压缩 102400</option>
+                <option value="200000" selected>200K / 自动压缩 160000</option>
+                <option value="400000">400K / 自动压缩 320000</option>
+                <option value="1000000">1M / 自动压缩 800000</option>
+              </select>
+              <div class="hint">选择后会自动填写上下文窗口，并把自动压缩阈值设为 80%。</div>
+            </div>
+            <div class="field">
+              <div class="label-row">
+                <label for="codexProvider">Provider 名称</label>
+                <button class="help-btn" type="button" aria-label="查看 Provider 名称填写建议" onclick="showFieldHelp('codexProvider')">?</button>
+              </div>
+              <input id="codexProvider" value="third_party">
+            </div>
+            <div class="field">
+              <div class="label-row">
+                <label for="codexContext">上下文窗口</label>
+                <button class="help-btn" type="button" aria-label="查看上下文窗口填写建议" onclick="showFieldHelp('codexContext')">?</button>
+              </div>
+              <input id="codexContext" value="200000">
+            </div>
+            <div class="field">
+              <div class="label-row">
+                <label for="codexCompact">自动压缩阈值</label>
+                <button class="help-btn" type="button" aria-label="查看自动压缩阈值填写建议" onclick="showFieldHelp('codexCompact')">?</button>
+              </div>
+              <input id="codexCompact" value="160000">
+            </div>
+            <div class="validation-list" id="codexValidation"></div>
+          </div>
+          <div class="output-list">
+            <div class="output-card">
+              <div class="output-head">
+                <div class="output-title">PowerShell：写入 OPENAI_API_KEY</div>
+                <button class="copy-btn" type="button" onclick="copyText('codexEnvOutput')">复制</button>
+              </div>
+              <div class="code" id="codexEnvOutput"></div>
+            </div>
+            <div class="output-card">
+              <div class="output-head">
+                <div class="output-title">%USERPROFILE%\.codex\config.toml</div>
+                <button class="copy-btn" type="button" onclick="copyText('codexOutput')">复制</button>
+              </div>
+              <div class="code" id="codexOutput"></div>
+            </div>
+          </div>
+          <p class="inline-note">不要手写 <code>auth.json</code>。第三方 API Key 放在环境变量里，配置文件只引用 <code>env_key</code>，更稳定也更少泄露。</p>
+          <div class="tester">
+            <div class="tester-head">
+              <div>
+                <div class="tester-title">API Key 连通性测试</div>
+                <div class="tester-desc">使用当前 Base URL、API Key 和模型名发送最小 Responses 请求。若返回 404，通常说明站点不支持 Codex 需要的 Responses API。</div>
+              </div>
+              <div class="tester-actions">
+                <button class="copy-btn" type="button" onclick="testApi('codex')">测试当前配置</button>
+                <button class="small-btn" type="button" onclick="copyTestCommand('codex')">复制测试命令</button>
+                <button class="small-btn" type="button" onclick="copyApplyScript('codex')">复制一键配置脚本</button>
+                <button class="small-btn" type="button" onclick="copySupportInfo('codex')">复制排错信息</button>
+                <button class="small-btn" type="button" onclick="clearTestResult('codex')">清空结果</button>
+              </div>
+            </div>
+            <div class="test-result" id="codexTestResult">尚未测试。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" id="geminiPage">
+      <div class="page-head">
+        <div class="summary">
+          <h2>Gemini CLI 连接 Gemini 兼容站点</h2>
+          <p>Gemini CLI 的第三方站点支持取决于站点是否兼容 Google Gemini API。API Key 可用 <code>GEMINI_API_KEY</code> 注入；Base URL 需要站点和当前 CLI 版本支持对应环境变量。</p>
+          <div class="badge-row">
+            <span class="badge">密钥环境变量：GEMINI_API_KEY</span>
+            <span class="badge">Base URL：GOOGLE_GEMINI_BASE_URL</span>
+            <span class="badge">协议：Gemini API 兼容</span>
+          </div>
+        </div>
+        <div class="compat">
+          <h3>站点兼容性</h3>
+          <p>Gemini CLI 对第三方 Base URL 的支持比 OpenAI SDK 更依赖版本。配置后先运行 <code>gemini --version</code> 和一个简单提问；如果仍访问官方地址，优先检查 CLI 版本和站点说明。</p>
+        </div>
+      </div>
+
+      <div class="main-grid">
+        <div class="panel">
+          <h3>Windows 步骤</h3>
+          <ol class="steps">
+            <li class="step">
+              <span class="num">1</span>
+              <div>
+                <div class="step-title">安装或更新 Gemini CLI</div>
+                <div class="code">npm install -g @google/gemini-cli@latest</div>
+              </div>
+            </li>
+            <li class="step">
+              <span class="num">2</span>
+              <div>
+                <div class="step-title">写入第三方站点环境变量</div>
+                <p>执行右侧生成的 PowerShell 命令，然后重新打开终端。</p>
+              </div>
+            </li>
+            <li class="step">
+              <span class="num">3</span>
+              <div>
+                <div class="step-title">测试模型</div>
+                <div class="code">gemini --model gemini-2.5-pro</div>
+              </div>
+            </li>
+          </ol>
+          <div class="checklist">
+            <h3>排查点</h3>
+            <ul>
+              <li>401 / API key not valid：第三方站点 key 不可用，或 CLI 没读到新环境变量。</li>
+              <li>仍跳官方登录：删除旧的 Gemini CLI 登录状态，或在新终端中确认 <code>GEMINI_API_KEY</code> 存在。</li>
+              <li>Base URL 无效：该 Gemini CLI 版本或站点不支持自定义 Base URL。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>配置生成器</h3>
+          <div class="save-box">
+            <div class="save-row">
+              <div class="field">
+                <label for="geminiSaveName">保存名称</label>
+                <input id="geminiSaveName" placeholder="Gemini 第三方站点">
+              </div>
+              <button class="copy-btn" type="button" onclick="saveConfig('gemini')">新增到保存列表</button>
+              <button class="small-btn" type="button" onclick="overwriteLoadedConfig('gemini')">覆盖当前载入</button>
+            </div>
+            <div class="hint">保存到当前浏览器本地；包含 API Key，建议仅在个人电脑使用。</div>
+            <div class="saved-list" id="geminiSavedList"></div>
+          </div>
+          <div class="form-grid">
+            <div class="field full">
+              <label for="geminiBaseUrl">Base URL</label>
+              <input id="geminiBaseUrl" placeholder="https://your-gemini-site.example.com">
+              <div class="hint">填第三方站点提供的 Gemini API 根地址，不要填具体模型或生成端点。是否带 <code>/v1beta</code>、<code>/v1</code> 取决于站点说明；Gemini CLI 对自定义 Base URL 也取决于当前版本支持。</div>
+              <button class="small-btn" type="button" onclick="normalizeUrl('gemini')">一键修正 URL</button>
+            </div>
+            <div class="field">
+              <label for="geminiApiKey">API Key</label>
+              <input id="geminiApiKey" placeholder="AIza-your-key">
+            </div>
+            <div class="field">
+              <label for="geminiModel">模型名</label>
+              <input id="geminiModel" placeholder="gemini-2.5-pro">
+              <div class="model-chip-row" id="geminiModelFavorites"></div>
+            </div>
+            <div class="validation-list" id="geminiValidation"></div>
+          </div>
+          <div class="output-list">
+            <div class="output-card">
+              <div class="output-head">
+                <div class="output-title">PowerShell：写入 Gemini 环境变量</div>
+                <button class="copy-btn" type="button" onclick="copyText('geminiOutput')">复制</button>
+              </div>
+              <div class="code" id="geminiOutput"></div>
+            </div>
+          </div>
+          <p class="inline-note">如果第三方站点文档要求的 Base URL 环境变量名不是 <code>GOOGLE_GEMINI_BASE_URL</code>，以站点文档为准替换。</p>
+          <div class="tester">
+            <div class="tester-head">
+              <div>
+                <div class="tester-title">API Key 连通性测试</div>
+                <div class="tester-desc">使用当前 Base URL、API Key 和模型名发送最小 generateContent 请求。Gemini 第三方 Base URL 是否可用取决于站点和 CLI 版本。</div>
+              </div>
+              <div class="tester-actions">
+                <button class="copy-btn" type="button" onclick="testApi('gemini')">测试当前配置</button>
+                <button class="small-btn" type="button" onclick="copyTestCommand('gemini')">复制测试命令</button>
+                <button class="small-btn" type="button" onclick="copyApplyScript('gemini')">复制一键配置脚本</button>
+                <button class="small-btn" type="button" onclick="copySupportInfo('gemini')">复制排错信息</button>
+                <button class="small-btn" type="button" onclick="clearTestResult('gemini')">清空结果</button>
+              </div>
+            </div>
+            <div class="test-result" id="geminiTestResult">尚未测试。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+      </div>
+      <div class="wizard-buttons">
+        <button class="small-btn" type="button" onclick="flowPrev()">上一步</button>
+        <button class="copy-btn" type="button" id="flowNextBtn" onclick="flowNext()">下一步</button>
+      </div>
+    </section>
+
+    <section class="simple-mode mode-page" aria-label="精简版配置教程">
+      <nav class="tabs" aria-label="精简版 CLI 选择">
+        <button class="tab-btn active" type="button" id="simpleClaudeTab" onclick="switchSimplePage('claude')">Claude Code</button>
+        <button class="tab-btn" type="button" id="simpleCodexTab" onclick="switchSimplePage('codex')">Codex CLI</button>
+        <button class="tab-btn" type="button" id="simpleGeminiTab" onclick="switchSimplePage('gemini')">Gemini CLI</button>
+      </nav>
+
+      <div class="simple-shell">
+        <div class="steps-hint">
+          <div class="steps-hint-title">精简流程</div>
+          <div class="steps-hint-list">
+            <div class="steps-hint-item">填写 Base URL、API Key 和模型名</div>
+            <div class="steps-hint-item">复制生成的配置或命令</div>
+            <div class="steps-hint-item">可选：保存到浏览器本地列表，方便下次载入</div>
+            <div class="steps-hint-item">按下方步骤写入本机后重新打开终端</div>
+          </div>
+        </div>
+
+        <div class="simple-page active" id="simpleClaudePage">
+          <div class="collapsible-section">
+            <div class="collapsible-header active" onclick="toggleCollapsible(this)">
+              <div class="collapsible-title"><span>📝</span><span>步骤 1：填写 Claude 配置信息</span></div>
+              <div class="collapsible-icon">▼</div>
+            </div>
+            <div class="collapsible-content active">
+              <div class="collapsible-body">
+                <div class="form-grid">
+                  <div class="field full"><label for="simpleClaudeBaseUrl">Base URL</label><input id="simpleClaudeBaseUrl" placeholder="https://your-claude-site.example.com"><div class="hint">填 Anthropic 兼容根路径，不要填完整 <code>/messages</code> 端点。</div></div>
+                  <div class="field"><label for="simpleClaudeApiKey">API Key</label><input id="simpleClaudeApiKey" placeholder="sk-your-key"></div>
+                  <div class="field"><label for="simpleClaudeModel">模型名</label><input id="simpleClaudeModel" placeholder="claude-sonnet-4-5"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="collapsible-section">
+            <div class="collapsible-header active" onclick="toggleCollapsible(this)">
+              <div class="collapsible-title"><span>📋</span><span>步骤 2：生成的配置代码</span></div>
+              <div class="collapsible-icon">▼</div>
+            </div>
+            <div class="collapsible-content active">
+              <div class="collapsible-body">
+                <div class="output-head"><div class="output-title">%USERPROFILE%\.claude\settings.json</div><button class="copy-btn" type="button" onclick="copySimpleOutput('claude')">复制配置</button></div>
+                <div class="code" id="simpleClaudeOutput"></div>
+              </div>
+            </div>
+          </div>
+          <div class="collapsible-section">
+            <div class="collapsible-header" onclick="toggleCollapsible(this)">
+              <div class="collapsible-title"><span>💾</span><span>步骤 3：保存配置（可选）</span></div>
+              <div class="collapsible-icon">▼</div>
+            </div>
+            <div class="collapsible-content">
+              <div class="collapsible-body">
+                <p style="color: var(--muted); margin-bottom: 16px;">保存到浏览器本地列表，数据不会上传。详细版和精简版共用同一份保存列表。</p>
+                <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                  <input id="simpleClaudeSaveName" placeholder="我的 Claude 配置" style="flex: 1;">
+                  <button class="copy-btn" type="button" onclick="saveSimpleConfig('claude')">保存当前配置</button>
+                </div>
+                <div class="saved-list" id="simpleClaudeSavedList"></div>
+              </div>
+            </div>
+          </div>
+          <div class="collapsible-section">
+            <div class="collapsible-header" onclick="toggleCollapsible(this)">
+              <div class="collapsible-title"><span>📖</span><span>步骤 4：Windows 步骤与排查</span></div>
+              <div class="collapsible-icon">▼</div>
+            </div>
+            <div class="collapsible-content">
+              <div class="collapsible-body"><ol class="steps"><li class="step"><span class="num">1</span><div>创建目录：<div class="code">New-Item -ItemType Directory -Force "$env:USERPROFILE\.claude"</div></div></li><li class="step"><span class="num">2</span><div>打开配置：<div class="code">notepad "$env:USERPROFILE\.claude\settings.json"</div></div></li><li class="step"><span class="num">3</span><div>粘贴上方 JSON，保存后重新打开终端。</div></li></ol><div class="checklist"><h3>排查点</h3><ul><li>401：API Key、额度或权限不对。</li><li>404：模型名或 Base URL 路径不对。</li><li>连接失败：站点可能不支持 Claude 兼容协议。</li></ul></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="simple-page" id="simpleCodexPage">
+          <div class="collapsible-section">
+            <div class="collapsible-header active" onclick="toggleCollapsible(this)">
+              <div class="collapsible-title"><span>📝</span><span>步骤 1：填写 Codex 配置信息</span></div>
+              <div class="collapsible-icon">▼</div>
+            </div>
+            <div class="collapsible-content active">
+              <div class="collapsible-body">
+                <div class="form-grid">
+                  <div class="field full"><label for="simpleCodexBaseUrl">Base URL</label><input id="simpleCodexBaseUrl" placeholder="https://your-openai-site.example.com/v1"><div class="hint">通常需要带 <code>/v1</code>，不要填 <code>/responses</code>。</div></div>
+                  <div class="field"><label for="simpleCodexApiKey">API Key</label><input id="simpleCodexApiKey" placeholder="sk-your-key"></div>
+                  <div class="field"><label for="simpleCodexModel">模型名</label><input id="simpleCodexModel" placeholder="gpt-5.1-codex"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="collapsible-section">
+            <div class="collapsible-header active" onclick="toggleCollapsible(this)">
+              <div class="collapsible-title"><span>📋</span><span>步骤 2：生成的配置代码</span></div>
+              <div class="collapsible-icon">▼</div>
+            </div>
+            <div class="collapsible-content active">
+              <div class="collapsible-body">
+                <div class="output-head"><div class="output-title">PowerShell 环境变量</div><button class="copy-btn" type="button" onclick="copySimpleOutput('codexEnv')">复制命令</button></div>
+                <div class="code" id="simpleCodexEnvOutput"></div>
+                <div class="output-head" style="margin-top: 16px;"><div class="output-title">%USERPROFILE%\.codex\config.toml</div><button class="copy-btn" type="button" onclick="copySimpleOutput('codex')">复制配置</button></div>
+                <div class="code" id="simpleCodexOutput"></div>
+              </div>
+            </div>
+          </div>
+          <div class="collapsible-section">
+            <div class="collapsible-header" onclick="toggleCollapsible(this)">
+              <div class="collapsible-title"><span>💾</span><span>步骤 3：保存配置（可选）</span></div>
+              <div class="collapsible-icon">▼</div>
+            </div>
+            <div class="collapsible-content">
+              <div class="collapsible-body">
+                <p style="color: var(--muted); margin-bottom: 16px;">保存到浏览器本地列表，数据不会上传。详细版和精简版共用同一份保存列表。</p>
+                <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                  <input id="simpleCodexSaveName" placeholder="我的 Codex 配置" style="flex: 1;">
+                  <button class="copy-btn" type="button" onclick="saveSimpleConfig('codex')">保存当前配置</button>
+                </div>
+                <div class="saved-list" id="simpleCodexSavedList"></div>
+              </div>
+            </div>
+          </div>
+          <div class="collapsible-section">
+            <div class="collapsible-header" onclick="toggleCollapsible(this)">
+              <div class="collapsible-title"><span>📖</span><span>步骤 4：Windows 步骤与排查</span></div>
+              <div class="collapsible-icon">▼</div>
+            </div>
+            <div class="collapsible-content">
+              <div class="collapsible-body"><ol class="steps"><li class="step"><span class="num">1</span><div>复制并执行环境变量命令。</div></li><li class="step"><span class="num">2</span><div>创建目录并打开配置：<div class="code">New-Item -ItemType Directory -Force "$env:USERPROFILE\.codex"<br>notepad "$env:USERPROFILE\.codex\config.toml"</div></div></li><li class="step"><span class="num">3</span><div>粘贴 TOML，保存后运行 <code>codex</code>。</div></li></ol><div class="checklist"><h3>排查点</h3><ul><li>404：站点可能不支持 Responses API。</li><li>启动后仍走官方账号：检查 <code>model_provider</code>。</li><li>TOML 报错：重新复制生成内容。</li></ul></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="simple-page" id="simpleGeminiPage">
+          <div class="collapsible-section">
+            <div class="collapsible-header active" onclick="toggleCollapsible(this)">
+              <div class="collapsible-title"><span>📝</span><span>步骤 1：填写 Gemini 配置信息</span></div>
+              <div class="collapsible-icon">▼</div>
+            </div>
+            <div class="collapsible-content active">
+              <div class="collapsible-body">
+                <div class="form-grid">
+                  <div class="field full"><label for="simpleGeminiBaseUrl">Base URL</label><input id="simpleGeminiBaseUrl" placeholder="https://your-gemini-site.example.com"><div class="hint">填第三方站点提供的 Gemini API 根地址。</div></div>
+                  <div class="field"><label for="simpleGeminiApiKey">API Key</label><input id="simpleGeminiApiKey" placeholder="AIza-your-key"></div>
+                  <div class="field"><label for="simpleGeminiModel">模型名</label><input id="simpleGeminiModel" placeholder="gemini-2.5-pro"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="collapsible-section">
+            <div class="collapsible-header active" onclick="toggleCollapsible(this)">
+              <div class="collapsible-title"><span>📋</span><span>步骤 2：生成的配置命令</span></div>
+              <div class="collapsible-icon">▼</div>
+            </div>
+            <div class="collapsible-content active">
+              <div class="collapsible-body">
+                <div class="output-head"><div class="output-title">PowerShell 环境变量</div><button class="copy-btn" type="button" onclick="copySimpleOutput('gemini')">复制命令</button></div>
+                <div class="code" id="simpleGeminiOutput"></div>
+              </div>
+            </div>
+          </div>
+          <div class="collapsible-section">
+            <div class="collapsible-header" onclick="toggleCollapsible(this)">
+              <div class="collapsible-title"><span>💾</span><span>步骤 3：保存配置（可选）</span></div>
+              <div class="collapsible-icon">▼</div>
+            </div>
+            <div class="collapsible-content">
+              <div class="collapsible-body">
+                <p style="color: var(--muted); margin-bottom: 16px;">保存到浏览器本地列表，数据不会上传。详细版和精简版共用同一份保存列表。</p>
+                <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                  <input id="simpleGeminiSaveName" placeholder="我的 Gemini 配置" style="flex: 1;">
+                  <button class="copy-btn" type="button" onclick="saveSimpleConfig('gemini')">保存当前配置</button>
+                </div>
+                <div class="saved-list" id="simpleGeminiSavedList"></div>
+              </div>
+            </div>
+          </div>
+          <div class="collapsible-section">
+            <div class="collapsible-header" onclick="toggleCollapsible(this)">
+              <div class="collapsible-title"><span>📖</span><span>步骤 4：Windows 步骤与排查</span></div>
+              <div class="collapsible-icon">▼</div>
+            </div>
+            <div class="collapsible-content">
+              <div class="collapsible-body"><ol class="steps"><li class="step"><span class="num">1</span><div>安装或更新：<div class="code">npm install -g @google/gemini-cli@latest</div></div></li><li class="step"><span class="num">2</span><div>复制并执行上方环境变量命令。</div></li><li class="step"><span class="num">3</span><div>重新打开终端后运行 <code>gemini --model 模型名</code>。</div></li></ol><div class="checklist"><h3>排查点</h3><ul><li>仍跳官方登录：检查环境变量和旧登录状态。</li><li>Base URL 无效：确认 CLI 版本和站点支持。</li><li>401：API Key 或站点权限异常。</li></ul></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-check">
+      <div>
+        <div class="footer-check-title">最后核对</div>
+        <div class="footer-check-note">2026-05-15。第三方站点必须声明兼容对应协议，配置才可靠。</div>
+      </div>
+      <div class="copyright">Copyright © flower</div>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast">已复制</div>
+
+  <!-- 载入配置模态框 -->
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">✅ 配置已载入</h3>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- 动态内容 -->
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn-secondary modal-btn" type="button" onclick="copyModalCommand()">📋 复制命令</button>
+        <button class="modal-btn" type="button" onclick="closeModal()">知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const pages = ['claude', 'codex', 'gemini'];
+    const storageKey = 'cliThirdPartyApiSavedConfigs';
+    const configFields = {
+      claude: ['claudeBaseUrl', 'claudeApiKey', 'claudeModel'],
+      codex: ['codexBaseUrl', 'codexApiKey', 'codexModel', 'codexContextPreset', 'codexProvider', 'codexContext', 'codexCompact'],
+      gemini: ['geminiBaseUrl', 'geminiApiKey', 'geminiModel']
+    };
+    const simpleFieldMap = {
+      claude: {
+        simpleClaudeBaseUrl: 'claudeBaseUrl',
+        simpleClaudeApiKey: 'claudeApiKey',
+        simpleClaudeModel: 'claudeModel'
+      },
+      codex: {
+        simpleCodexBaseUrl: 'codexBaseUrl',
+        simpleCodexApiKey: 'codexApiKey',
+        simpleCodexModel: 'codexModel'
+      },
+      gemini: {
+        simpleGeminiBaseUrl: 'geminiBaseUrl',
+        simpleGeminiApiKey: 'geminiApiKey',
+        simpleGeminiModel: 'geminiModel'
+      }
+    };
+    const codexPresets = {
+      128000: 102400,
+      200000: 160000,
+      400000: 320000,
+      1000000: 800000
+    };
+    const loadedConfigIds = { claude: null, codex: null, gemini: null };
+    const compareBuffer = { claude: null, codex: null, gemini: null };
+    const lastTestResults = {};
+    const flowSteps = [
+      {
+        key: 'detect',
+        title: '识别协议',
+        tipTitle: '先确认站点支持什么协议',
+        tip: '不确定中转站类型时，先自动识别。识别结果可直接套用到对应 CLI 表单。'
+      },
+      {
+        key: 'windows',
+        title: 'Windows 步骤',
+        tipTitle: '按当前 CLI 查看系统操作',
+        tip: '这里只展示当前 CLI 的系统操作步骤。切换标签后，步骤内容会自动变化。'
+      },
+      {
+        key: 'config',
+        title: '配置生成器',
+        tipTitle: '填写并保存配置',
+        tip: '填写 Base URL、API Key、模型名，并使用健康度检查、URL 修正和保存列表。'
+      },
+      {
+        key: 'test',
+        title: '连通性测试',
+        tipTitle: '最后测试 API Key 是否可用',
+        tip: '先快速测试；如果被 CORS 拦截，再复制测试命令到终端执行。测试通过后再保存。'
+      }
+    ];
+    let flowStepIndex = 0;
+    let lastCapabilityResults = null;
+
+    function switchPage(type) {
+      pages.forEach((name) => {
+        document.getElementById(name + 'Page').classList.toggle('active', name === type);
+        document.getElementById(name + 'Tab').classList.toggle('active', name === type);
+      });
+      renderFlowWizard(false);
+    }
+
+    function switchTutorialMode(mode) {
+      const normalized = mode === 'simple' ? 'simple' : 'detailed';
+      document.body.classList.toggle('mode-simple', normalized === 'simple');
+      document.body.classList.toggle('mode-detailed', normalized === 'detailed');
+      document.getElementById('simpleModeBtn').classList.toggle('active', normalized === 'simple');
+      document.getElementById('detailedModeBtn').classList.toggle('active', normalized === 'detailed');
+      localStorage.setItem('cliTutorialMode', normalized);
+      if (normalized === 'simple') {
+        updateSimpleConfig();
+      } else {
+        renderFlowWizard(false);
+      }
+    }
+
+    function switchSimplePage(type) {
+      pages.forEach((name) => {
+        document.getElementById('simple' + capitalize(name) + 'Page').classList.toggle('active', name === type);
+        document.getElementById('simple' + capitalize(name) + 'Tab').classList.toggle('active', name === type);
+      });
+      updateSimpleConfig();
+    }
+
+    function capitalize(value) {
+      return value.charAt(0).toUpperCase() + value.slice(1);
+    }
+
+    function goFlowStep(index, shouldScroll = true) {
+      const targetIndex = Math.max(0, Math.min(flowSteps.length - 1, index));
+      if (targetIndex > flowStepIndex && !canEnterFlowStep(targetIndex)) {
+        renderFlowWizard(false);
+        return;
+      }
+      flowStepIndex = targetIndex;
+      renderFlowWizard(shouldScroll);
+    }
+
+    function flowPrev() {
+      goFlowStep(flowStepIndex - 1);
+    }
+
+    function flowNext() {
+      const type = activePageType();
+      if (flowStepIndex === 0 && !canLeaveDetectStep()) {
+        return;
+      }
+      if (flowStepIndex === 2 && !canLeaveConfigStep(type)) {
+        return;
+      }
+      if (flowStepIndex === flowSteps.length - 1) {
+        const result = matchingLastTestResult(type);
+        if (result && result.ok) {
+          saveConfig(type);
+          showToast('测试通过，已保存当前配置');
+        } else {
+          showToast('请先完成连通性测试；未通过也可以手动复制脚本排查');
+        }
+        return;
+      }
+      goFlowStep(flowStepIndex + 1);
+    }
+
+    function canEnterFlowStep(targetIndex) {
+      const type = activePageType();
+      if (targetIndex >= 1 && !canLeaveDetectStep()) {
+        return false;
+      }
+      if (targetIndex >= 3 && !canLeaveConfigStep(type)) {
+        return false;
+      }
+      return true;
+    }
+
+    function canLeaveDetectStep() {
+      const missing = [
+        ['detectBaseUrl', 'Base URL'],
+        ['detectApiKey', 'API Key'],
+        ['detectModel', '模型名']
+      ].filter(([id]) => !getValue(id));
+
+      clearFieldAttention();
+      if (missing.length > 0) {
+        missing.forEach(([id]) => markFieldAttention(id));
+        showToast('请先填写识别用：' + missing.map(([, label]) => label).join('、'));
+        return false;
+      }
+
+      if (!lastCapabilityResults || !capabilityResultMatchesInputs()) {
+        showToast('建议先点击“自动识别”，也可以再次点击下一步继续');
+        lastCapabilityResults = { skipped: true, baseUrl: getValue('detectBaseUrl'), apiKey: getValue('detectApiKey'), model: getValue('detectModel'), results: [] };
+        renderFlowSummary();
+        return false;
+      }
+      return true;
+    }
+
+    function capabilityResultMatchesInputs() {
+      return Boolean(
+        lastCapabilityResults &&
+        lastCapabilityResults.baseUrl === getValue('detectBaseUrl') &&
+        lastCapabilityResults.apiKey === getValue('detectApiKey') &&
+        lastCapabilityResults.model === getValue('detectModel')
+      );
+    }
+
+    function canLeaveConfigStep(type) {
+      clearFieldAttention();
+      const missing = missingTestFields(type);
+      if (missing.length > 0) {
+        fieldIdsForLabels(type, missing).forEach(markFieldAttention);
+        showToast('请先填写：' + missing.join('、'));
+        return false;
+      }
+
+      const errors = configBlockingErrors(type);
+      if (errors.length > 0) {
+        errors.forEach(markFieldAttention);
+        showToast('配置健康度存在严重问题，请先修正红色字段');
+        return false;
+      }
+      return true;
+    }
+
+    function renderFlowWizard(shouldScroll = false) {
+      const nav = document.getElementById('flowWizardNav');
+      if (!nav) {
+        return;
+      }
+
+      document.body.classList.remove('flow-detect', 'flow-windows', 'flow-config', 'flow-test');
+      document.body.classList.add('flow-' + flowSteps[flowStepIndex].key);
+
+      nav.textContent = '';
+      flowSteps.forEach((step, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'wizard-step';
+        button.classList.toggle('active', index === flowStepIndex);
+        const status = flowStepStatus(index);
+        button.classList.toggle('completed', status === 'complete');
+        button.classList.toggle('ready', status === 'ready');
+        button.classList.toggle('blocked', status === 'blocked');
+        button.title = flowStepStatusText(index);
+        button.innerHTML = '<span class="wizard-circle">' + flowStepMark(index) + '</span><span class="wizard-label">' + escapeHtml(step.title) + '</span>';
+        button.addEventListener('click', () => goFlowStep(index));
+        nav.appendChild(button);
+
+        if (index < flowSteps.length - 1) {
+          const connector = document.createElement('div');
+          connector.className = 'wizard-connector';
+          connector.classList.toggle('completed', flowStepStatus(index) === 'complete');
+          nav.appendChild(connector);
+        }
+      });
+
+      const current = flowSteps[flowStepIndex];
+      document.getElementById('flowTipTitle').textContent = current.tipTitle;
+      document.getElementById('flowTipText').textContent = current.tip;
+      const nextButton = document.getElementById('flowNextBtn');
+      if (nextButton) {
+        nextButton.textContent = flowNextLabel();
+      }
+      renderFlowSummary();
+      renderFinalChecklist();
+
+      if (shouldScroll) {
+        const target = document.querySelector('.flow-wizard');
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    }
+
+    function renderFlowSummary() {
+      const list = document.getElementById('flowSummaryList');
+      if (!list) return;
+      const type = activePageType();
+      const labels = { claude: 'Claude Code', codex: 'Codex CLI', gemini: 'Gemini CLI' };
+      const baseUrl = flowStepIndex === 0 ? getValue('detectBaseUrl') : getValue(type + 'BaseUrl');
+      const model = flowStepIndex === 0 ? getValue('detectModel') : getModelForType(type);
+      const saved = readSavedConfigs();
+      const savedCount = pages.reduce((total, page) => total + ((saved[page] || []).length), 0);
+      const capabilityText = lastCapabilityResults
+        ? lastCapabilityResults.results.filter((result) => result.ok).map((result) => capabilityLabel(result.kind)).join('、') || '暂无可用协议'
+        : '未识别';
+
+      list.innerHTML = [
+        '当前 CLI：' + (labels[type] || '待选择'),
+        '当前步骤：' + flowSteps[flowStepIndex].title,
+        'Base URL：' + (baseUrl || '未填写'),
+        '模型：' + (model || '未填写'),
+        '站点能力：' + capabilityText,
+        '保存配置：' + savedCount + ' 条'
+      ].map((item) => '<li>' + escapeHtml(item) + '</li>').join('');
+    }
+
+    function flowStepStatus(index) {
+      const type = activePageType();
+      if (index === 0) {
+        if (capabilityResultMatchesInputs() && lastCapabilityResults && lastCapabilityResults.results.some((result) => result.ok && result.kind !== 'chat')) return 'complete';
+        return getValue('detectBaseUrl') && getValue('detectApiKey') && getValue('detectModel') ? 'ready' : 'blocked';
+      }
+      if (index === 1) {
+        return 'ready';
+      }
+      if (index === 2) {
+        if (missingTestFields(type).length === 0 && configBlockingErrors(type).length === 0) return 'complete';
+        return 'blocked';
+      }
+      const result = matchingLastTestResult(type);
+      if (result && result.ok) return 'complete';
+      return result ? 'blocked' : 'ready';
+    }
+
+    function flowStepMark(index) {
+      const status = flowStepStatus(index);
+      if (status === 'complete') return '✓';
+      if (status === 'blocked') return '!';
+      return String(index + 1);
+    }
+
+    function flowStepStatusText(index) {
+      const labels = { complete: '已完成', ready: '可继续', blocked: '需要处理' };
+      return labels[flowStepStatus(index)] || '';
+    }
+
+    function flowNextLabel() {
+      const type = activePageType();
+      if (flowStepIndex === 0) {
+        return capabilityResultMatchesInputs() ? '已识别，下一步' : '下一步';
+      }
+      if (flowStepIndex === 2) {
+        return configBlockingErrors(type).length === 0 && missingTestFields(type).length === 0 ? '配置正常，下一步' : '下一步';
+      }
+      if (flowStepIndex === flowSteps.length - 1) {
+        const result = matchingLastTestResult(type);
+        return result && result.ok ? '测试通过，保存' : '等待测试通过';
+      }
+      return '下一步';
+    }
+
+    function activePageType() {
+      return pages.find((type) => document.getElementById(type + 'Page').classList.contains('active')) || 'claude';
+    }
+
+    function markFieldAttention(id) {
+      const field = document.getElementById(id);
+      if (field) {
+        field.classList.add('field-attention');
+        field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    function clearFieldAttention() {
+      document.querySelectorAll('.field-attention').forEach((field) => {
+        field.classList.remove('field-attention');
+      });
+    }
+
+    function fieldIdsForLabels(type, labels) {
+      const map = {
+        claude: { 'Base URL': 'claudeBaseUrl', 'API Key': 'claudeApiKey', '模型名': 'claudeModel' },
+        codex: { 'Base URL': 'codexBaseUrl', 'API Key': 'codexApiKey', '模型名': 'codexModel' },
+        gemini: { 'Base URL': 'geminiBaseUrl', 'API Key': 'geminiApiKey', '模型名': 'geminiModel' }
+      }[type] || {};
+      return labels.map((label) => map[label]).filter(Boolean);
+    }
+
+    function requiredFieldIds(type) {
+      return {
+        claude: ['claudeBaseUrl', 'claudeApiKey', 'claudeModel'],
+        codex: ['codexBaseUrl', 'codexApiKey', 'codexModel'],
+        gemini: ['geminiBaseUrl', 'geminiApiKey', 'geminiModel']
+      }[type] || [];
+    }
+
+    function requiredFieldsComplete(type) {
+      return requiredFieldIds(type).every((id) => getValue(id));
+    }
+
+    function setOutputContent(id, text, isEmpty) {
+      const element = document.getElementById(id);
+      element.textContent = text;
+      element.classList.toggle('empty-output', Boolean(isEmpty));
+      element.dataset.empty = isEmpty ? 'true' : 'false';
+    }
+
+    function emptyOutputMessage(type) {
+      return '请先填写 Base URL、API Key 和模型名，填写后会自动生成配置。';
+    }
+
+    function ensureReadyForCopy(id) {
+      const map = {
+        claudeOutput: 'claude',
+        codexEnvOutput: 'codex',
+        codexOutput: 'codex',
+        geminiOutput: 'gemini'
+      };
+      const type = map[id];
+      if (!type) return true;
+      if (requiredFieldsComplete(type)) return true;
+      const missing = missingTestFields(type);
+      fieldIdsForLabels(type, missing).forEach(markFieldAttention);
+      showToast('缺少字段，未复制：' + missing.join('、'));
+      return false;
+    }
+
+    function configBlockingErrors(type) {
+      const ids = [];
+      const baseUrl = getValue(type + 'BaseUrl');
+      if (type === 'claude' && /\/messages\/?$/.test(baseUrl)) ids.push('claudeBaseUrl');
+      if (type === 'codex') {
+        if (/\/(responses|chat\/completions)\/?$/.test(baseUrl)) ids.push('codexBaseUrl');
+        if (!/^[A-Za-z0-9_-]+$/.test(getValue('codexProvider'))) ids.push('codexProvider');
+        const context = Number(getValue('codexContext'));
+        const compact = Number(getValue('codexCompact'));
+        if (!Number.isFinite(context) || context <= 0) ids.push('codexContext');
+        if (!Number.isFinite(compact) || compact <= 0 || compact >= context) ids.push('codexCompact');
+      }
+      if (type === 'gemini' && /\/models\/.+:generateContent\/?$/.test(baseUrl)) ids.push('geminiBaseUrl');
+      return ids;
+    }
+
+    function attentionFieldsForStatus(type, status) {
+      if (status === 401 || status === 403) return [type + 'ApiKey'];
+      if (status === 404) return [type + 'BaseUrl', type + 'Model'];
+      if (status === 400) return [type + 'BaseUrl', type + 'Model'];
+      return [];
+    }
+
+    function renderFinalChecklist() {
+      const container = document.getElementById('finalChecklist');
+      if (!container) return;
+      const type = activePageType();
+      const saved = readSavedConfigs();
+      const result = matchingLastTestResult(type);
+      const missing = missingTestFields(type);
+      const blocking = configBlockingErrors(type);
+      const items = [
+        ['Base URL 已填写', getValue(type + 'BaseUrl') ? 'ok' : 'error'],
+        ['API Key 已填写', getValue(type + 'ApiKey') ? 'ok' : 'error'],
+        ['模型名已填写', getModelForType(type) ? 'ok' : 'error'],
+        ['配置格式无严重错误', blocking.length === 0 ? 'ok' : 'error'],
+        ['当前配置已保存', currentConfigIsSaved(type) ? 'ok' : 'warn'],
+        ['连通性测试通过', result && result.ok ? 'ok' : (result ? 'error' : 'warn')]
+      ];
+      container.innerHTML = items.map(([text, kind]) => (
+        '<div class="check-item ' + kind + '">' + escapeHtml(text) + '</div>'
+      )).join('');
+    }
+
+    function getValue(id) {
+      return document.getElementById(id).value.trim();
+    }
+
+    function jsonObject(value) {
+      return JSON.stringify(value, null, 2);
+    }
+
+    function tomlString(value) {
+      return JSON.stringify(value);
+    }
+
+    function cleanTomlKey(value) {
+      const normalized = value.trim().replace(/[^A-Za-z0-9_-]/g, '_');
+      return normalized || 'third_party';
+    }
+
+    function positiveInteger(value, fallback) {
+      const parsed = Number.parseInt(value, 10);
+      return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+    }
+
+    function psString(value) {
+      return "'" + value.replace(/'/g, "''") + "'";
+    }
+
+    function psHereString(value) {
+      return "@'\n" + value.replace(/'@/g, "' @") + "\n'@";
+    }
+
+    function psHashtable(object) {
+      const pairs = Object.entries(object)
+        .map(([key, value]) => '  ' + psString(key) + ' = ' + psString(String(value)))
+        .join('\n');
+      return "@{\n" + pairs + "\n}";
+    }
+
+    function psWriteFileCommand(pathExpression, content) {
+      return [
+        '$path = ' + pathExpression,
+        '$dir = Split-Path -Parent $path',
+        'New-Item -ItemType Directory -Force $dir | Out-Null',
+        '$content = ' + psHereString(content),
+        'Set-Content -LiteralPath $path -Value $content -Encoding UTF8'
+      ].join('\n');
+    }
+
+    function shellQuote(value) {
+      return "'" + String(value).replace(/'/g, "'\"'\"'") + "'";
+    }
+
+    function bashHereDoc(content) {
+      return "<<'EOF'\n" + content.replace(/\nEOF\n/g, '\nEOF_MARKER\n') + "\nEOF";
+    }
+
+    function currentPlatform() {
+      const select = document.getElementById('platformMode');
+      return select ? select.value : 'powershell';
+    }
+
+    function trimTrailingSlash(value) {
+      return value.replace(/\/+$/, '');
+    }
+
+    function joinUrl(baseUrl, path) {
+      return trimTrailingSlash(baseUrl) + path;
+    }
+
+    function endpointFor(type) {
+      if (type === 'claude') {
+        const base = trimTrailingSlash(getValue('claudeBaseUrl'));
+        return base.endsWith('/v1') ? base + '/messages' : base + '/v1/messages';
+      }
+
+      if (type === 'codex') {
+        return joinUrl(getValue('codexBaseUrl'), '/responses');
+      }
+
+      const base = trimTrailingSlash(getValue('geminiBaseUrl'));
+      const model = encodeURIComponent(getValue('geminiModel'));
+      const versionedBase = /\/v1(beta)?$/.test(base) ? base : base + '/v1beta';
+      return versionedBase + '/models/' + model + ':generateContent';
+    }
+
+    function endpointForValues(kind, baseUrl, model) {
+      const base = trimTrailingSlash(baseUrl);
+      if (kind === 'claude') {
+        return base.endsWith('/v1') ? base + '/messages' : base + '/v1/messages';
+      }
+      if (kind === 'responses') {
+        return joinUrl(base, '/responses');
+      }
+      if (kind === 'chat') {
+        return joinUrl(base, '/chat/completions');
+      }
+      const versionedBase = /\/v1(beta)?$/.test(base) ? base : base + '/v1beta';
+      return versionedBase + '/models/' + encodeURIComponent(model) + ':generateContent';
+    }
+
+    function testRequest(type) {
+      if (type === 'claude') {
+        return {
+          url: endpointFor(type),
+          headers: {
+            'content-type': 'application/json',
+            'anthropic-version': '2023-06-01',
+            'x-api-key': getValue('claudeApiKey')
+          },
+          body: {
+            model: getValue('claudeModel'),
+            max_tokens: 8,
+            messages: [{ role: 'user', content: 'ping' }]
+          }
+        };
+      }
+
+      if (type === 'codex') {
+        return {
+          url: endpointFor(type),
+          headers: {
+            'content-type': 'application/json',
+            'authorization': 'Bearer ' + getValue('codexApiKey')
+          },
+          body: {
+            model: getValue('codexModel'),
+            input: 'ping',
+            max_output_tokens: 16
+          }
+        };
+      }
+
+      return {
+        url: endpointFor(type),
+        headers: {
+          'content-type': 'application/json',
+          'x-goog-api-key': getValue('geminiApiKey')
+        },
+        body: {
+          contents: [{ parts: [{ text: 'ping' }] }],
+          generationConfig: { maxOutputTokens: 8 }
+        }
+      };
+    }
+
+    function capabilityRequest(kind, baseUrl, apiKey, model) {
+      if (kind === 'claude') {
+        return {
+          url: endpointForValues('claude', baseUrl, model),
+          headers: { 'content-type': 'application/json', 'anthropic-version': '2023-06-01', 'x-api-key': apiKey },
+          body: { model, max_tokens: 8, messages: [{ role: 'user', content: 'ping' }] }
+        };
+      }
+      if (kind === 'responses') {
+        return {
+          url: endpointForValues('responses', baseUrl, model),
+          headers: { 'content-type': 'application/json', authorization: 'Bearer ' + apiKey },
+          body: { model, input: 'ping', max_output_tokens: 16 }
+        };
+      }
+      if (kind === 'chat') {
+        return {
+          url: endpointForValues('chat', baseUrl, model),
+          headers: { 'content-type': 'application/json', authorization: 'Bearer ' + apiKey },
+          body: { model, messages: [{ role: 'user', content: 'ping' }], max_tokens: 16 }
+        };
+      }
+      return {
+        url: endpointForValues('gemini', baseUrl, model),
+        headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
+        body: { contents: [{ parts: [{ text: 'ping' }] }], generationConfig: { maxOutputTokens: 8 } }
+      };
+    }
+
+    function explainStatus(type, status) {
+      if (status === 401 || status === 403) {
+        return 'API Key、额度、分组权限或站点鉴权方式不正确。';
+      }
+      if (status === 404) {
+        if (type === 'codex') {
+          return 'endpoint 不存在。这个站点可能不支持 /v1/responses，当前 Codex 配置不适合它。';
+        }
+        return 'Base URL、版本路径或模型 endpoint 不正确。';
+      }
+      if (status === 400) {
+        return '请求格式、模型名或站点协议兼容性有问题。';
+      }
+      if (status === 429) {
+        return '额度不足、限流或并发限制。';
+      }
+      if (status >= 500) {
+        return '第三方站点服务端错误或上游不可用。';
+      }
+      return '请根据返回内容继续排查 Base URL、模型名和站点协议。';
+    }
+
+    function testResultElement(type) {
+      return document.getElementById(type + 'TestResult');
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function missingTestFields(type) {
+      const fields = {
+        claude: [
+          ['claudeBaseUrl', 'Base URL'],
+          ['claudeApiKey', 'API Key'],
+          ['claudeModel', '模型名']
+        ],
+        codex: [
+          ['codexBaseUrl', 'Base URL'],
+          ['codexApiKey', 'API Key'],
+          ['codexModel', '模型名']
+        ],
+        gemini: [
+          ['geminiBaseUrl', 'Base URL'],
+          ['geminiApiKey', 'API Key'],
+          ['geminiModel', '模型名']
+        ]
+      }[type] || [];
+
+      return fields
+        .filter(([id]) => !getValue(id))
+        .map(([, label]) => label);
+    }
+
+    function setTestResult(type, kind, text) {
+      const result = testResultElement(type);
+      result.className = 'test-result ' + kind;
+      result.textContent = text;
+    }
+
+    function setStructuredTestResult(type, kind, data) {
+      const result = testResultElement(type);
+      result.className = 'test-result ' + kind;
+      const checks = data.checks || [];
+      const checksHtml = checks.map((check) => (
+        '<div><strong>' + escapeHtml(check.label) + '：</strong>' +
+        escapeHtml(check.status) +
+        (check.detail ? ' - ' + escapeHtml(check.detail) : '') +
+        '</div>'
+      )).join('');
+
+      result.innerHTML = [
+        '<div><strong>' + escapeHtml(data.title) + '</strong></div>',
+        '<div>HTTP 状态码：' + escapeHtml(data.status || '无') + '</div>',
+        '<div>Endpoint：<code>' + escapeHtml(data.endpoint) + '</code></div>',
+        '<div style="margin-top: 8px;">' + checksHtml + '</div>',
+        '<div style="margin-top: 8px;"><strong>建议：</strong>' + escapeHtml(data.advice) + '</div>',
+        data.response ? '<div style="margin-top: 8px;"><strong>返回摘要：</strong><br>' + escapeHtml(data.response) + '</div>' : ''
+      ].join('');
+    }
+
+    function browserFailureResult(type, request, message, advice) {
+      setStructuredTestResult(type, 'warn', {
+        title: message,
+        status: '无',
+        endpoint: request.url,
+        checks: [
+          { label: '鉴权', status: '未确认', detail: '浏览器没有拿到可读响应' },
+          { label: 'Base URL', status: '未确认', detail: '可能被 CORS 或网络拦截' },
+          { label: '模型', status: '未确认', detail: getModelForType(type) || '未填写' },
+          { label: '协议', status: '未确认', detail: protocolName(type) }
+        ],
+        advice
+      });
+    }
+
+    function protocolName(type) {
+      return {
+        claude: 'Anthropic Messages',
+        codex: 'OpenAI Responses',
+        gemini: 'Gemini generateContent'
+      }[type] || '未知协议';
+    }
+
+    function getModelForType(type) {
+      return {
+        claude: getValue('claudeModel'),
+        codex: getValue('codexModel'),
+        gemini: getValue('geminiModel')
+      }[type] || '';
+    }
+
+    function checksForHttpResult(type, ok, status) {
+      if (ok) {
+        return [
+          { label: '鉴权', status: '通过', detail: 'API Key 可用' },
+          { label: 'Base URL', status: '通过', detail: 'endpoint 可访问' },
+          { label: '模型', status: '通过', detail: getModelForType(type) },
+          { label: '协议', status: '通过', detail: protocolName(type) }
+        ];
+      }
+
+      return [
+        { label: '鉴权', status: status === 401 || status === 403 ? '失败' : '未确认', detail: status === 401 || status === 403 ? 'Key、额度或权限异常' : '服务端返回错误' },
+        { label: 'Base URL', status: status === 404 ? '失败' : '未确认', detail: status === 404 ? 'endpoint 不存在或路径错误' : '路径可能可达，但请求未通过' },
+        { label: '模型', status: status === 400 || status === 404 ? '可能失败' : '未确认', detail: getModelForType(type) },
+        { label: '协议', status: status === 400 || status === 404 ? '可能不兼容' : '未确认', detail: protocolName(type) }
+      ];
+    }
+
+    function summarizeResponse(text) {
+      if (!text) {
+        return '无响应正文';
+      }
+      return text.length > 900 ? text.slice(0, 900) + '\n...已截断' : text;
+    }
+
+    function parseErrorSummary(text) {
+      if (!text) {
+        return '无错误正文';
+      }
+      try {
+        const data = JSON.parse(text);
+        const error = data.error || data;
+        const parts = [];
+        if (error.type) parts.push('类型：' + error.type);
+        if (error.code) parts.push('代码：' + error.code);
+        if (error.status) parts.push('状态：' + error.status);
+        if (error.message) parts.push('消息：' + error.message);
+        if (parts.length > 0) return parts.join('\n');
+      } catch (error) {
+        // Fall through to raw text summary.
+      }
+      return summarizeResponse(text);
+    }
+
+    function redactedKeyForType(type) {
+      const key = {
+        claude: getValue('claudeApiKey'),
+        codex: getValue('codexApiKey'),
+        gemini: getValue('geminiApiKey')
+      }[type] || getValue('detectApiKey');
+      if (!key) return '未填写';
+      if (key.length <= 8) return key.slice(0, 2) + '****';
+      return key.slice(0, 4) + '****' + key.slice(-4);
+    }
+
+    async function testApi(type) {
+      const missing = missingTestFields(type);
+      if (missing.length > 0) {
+        clearFieldAttention();
+        fieldIdsForLabels(type, missing).forEach(markFieldAttention);
+        setTestResult(type, 'error', '请先填写：' + missing.join('、'));
+        return;
+      }
+
+      clearFieldAttention();
+      const request = testRequest(type);
+      setTestResult(type, 'warn', '正在测试...\nEndpoint: ' + request.url);
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 15000);
+
+      try {
+        const response = await fetch(request.url, {
+          method: 'POST',
+          headers: request.headers,
+          body: JSON.stringify(request.body),
+          signal: controller.signal
+        });
+        const text = await response.text();
+        setStructuredTestResult(type, response.ok ? 'success' : 'error', {
+          title: response.ok ? '测试成功' : '测试失败',
+          status: response.status,
+          endpoint: request.url,
+          checks: checksForHttpResult(type, response.ok, response.status),
+          advice: response.ok ? '当前 Base URL、API Key、模型名和协议基本可用。' : explainStatus(type, response.status),
+          response: response.ok ? summarizeResponse(text) : parseErrorSummary(text)
+        });
+        lastTestResults[type] = {
+          ok: response.ok,
+          status: response.status,
+          endpoint: request.url,
+          model: getModelForType(type),
+          protocol: protocolName(type),
+          advice: response.ok ? '当前配置可用。' : explainStatus(type, response.status),
+          response: response.ok ? summarizeResponse(text) : parseErrorSummary(text)
+        };
+        if (!response.ok) {
+          attentionFieldsForStatus(type, response.status).forEach(markFieldAttention);
+        }
+        markCurrentConfigTestStatus(type, lastTestResults[type]);
+      } catch (error) {
+        const isAbort = error && error.name === 'AbortError';
+        browserFailureResult(
+          type,
+          request,
+          isAbort ? '测试超时' : '浏览器测试未完成',
+          isAbort ? '站点响应过慢或网络不可达。建议复制测试命令在终端执行。' : '可能是 CORS 跨域拦截，也可能是网络或证书问题。这不一定代表 API Key 无效；请复制测试命令在终端执行。'
+        );
+        lastTestResults[type] = {
+          ok: false,
+          status: '浏览器未确认',
+          endpoint: request.url,
+          model: getModelForType(type),
+          protocol: protocolName(type),
+          advice: isAbort ? '站点响应过慢或网络不可达。' : '可能是 CORS 跨域拦截，建议用终端测试。',
+          response: error && error.message ? error.message : ''
+        };
+        markCurrentConfigTestStatus(type, lastTestResults[type]);
+      } finally {
+        clearTimeout(timer);
+        renderFlowWizard(false);
+      }
+    }
+
+    function powerShellTestCommand(type) {
+      const missing = missingTestFields(type);
+      if (missing.length > 0) {
+        return '请先填写：' + missing.join('、');
+      }
+
+      const request = testRequest(type);
+      const body = jsonObject(request.body);
+      if (currentPlatform() === 'bash') {
+        const headerArgs = Object.entries(request.headers)
+          .map(([key, value]) => "  -H " + shellQuote(key + ': ' + value))
+          .join(" \\\n");
+        return [
+          'curl -sS -X POST ' + shellQuote(request.url) + ' \\',
+          headerArgs + ' \\',
+          '  -d ' + shellQuote(JSON.stringify(request.body))
+        ].join('\n');
+      }
+
+      return [
+        '$uri = ' + psString(request.url),
+        '$headers = ' + psHashtable(request.headers),
+        '$body = ' + psHereString(body),
+        'Invoke-RestMethod -Method Post -Uri $uri -Headers $headers -Body $body | ConvertTo-Json -Depth 20'
+      ].join('\n');
+    }
+
+    async function copyTestCommand(type) {
+      const missing = missingTestFields(type);
+      if (missing.length > 0) {
+        fieldIdsForLabels(type, missing).forEach(markFieldAttention);
+        showToast('缺少字段，未复制测试命令：' + missing.join('、'));
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(powerShellTestCommand(type));
+        showToast('测试命令已复制');
+      } catch (error) {
+        setTestResult(type, 'warn', '复制失败。请手动复制生成器里的配置后自行测试。');
+      }
+    }
+
+    function applyScript(type) {
+      if (type === 'claude') {
+        if (currentPlatform() === 'bash') {
+          return [
+            'mkdir -p ~/.claude',
+            'cat > ~/.claude/settings.json ' + bashHereDoc(document.getElementById('claudeOutput').textContent),
+            'claude --version',
+            '# 运行 claude 后发送一个简单问题测试'
+          ].join('\n\n');
+        }
+        return [
+          psWriteFileCommand("(Join-Path $env:USERPROFILE '.claude\\settings.json')", document.getElementById('claudeOutput').textContent),
+          'claude --version',
+          '# 运行 claude 后发送一个简单问题测试'
+        ].join('\n\n');
+      }
+
+      if (type === 'codex') {
+        if (currentPlatform() === 'bash') {
+          return [
+            'export OPENAI_API_KEY=' + shellQuote(getValue('codexApiKey')),
+            'mkdir -p ~/.codex',
+            'cat > ~/.codex/config.toml ' + bashHereDoc(document.getElementById('codexOutput').textContent),
+            'codex --version',
+            '# 运行 codex 后发送一个简单问题测试'
+          ].join('\n\n');
+        }
+        return [
+          '[System.Environment]::SetEnvironmentVariable("OPENAI_API_KEY", ' + psString(getValue('codexApiKey')) + ', "User")',
+          '$env:OPENAI_API_KEY = ' + psString(getValue('codexApiKey')),
+          psWriteFileCommand("(Join-Path $env:USERPROFILE '.codex\\config.toml')", document.getElementById('codexOutput').textContent),
+          'codex --version',
+          '# 运行 codex 后发送一个简单问题测试'
+        ].join('\n\n');
+      }
+
+      if (currentPlatform() === 'bash') {
+        return [
+          'export GEMINI_API_KEY=' + shellQuote(getValue('geminiApiKey')),
+          'export GOOGLE_GEMINI_BASE_URL=' + shellQuote(getValue('geminiBaseUrl')),
+          'gemini --model ' + shellQuote(getValue('geminiModel'))
+        ].join('\n');
+      }
+
+      return [
+        '[System.Environment]::SetEnvironmentVariable("GEMINI_API_KEY", ' + psString(getValue('geminiApiKey')) + ', "User")',
+        '[System.Environment]::SetEnvironmentVariable("GOOGLE_GEMINI_BASE_URL", ' + psString(getValue('geminiBaseUrl')) + ', "User")',
+        '$env:GEMINI_API_KEY = ' + psString(getValue('geminiApiKey')),
+        '$env:GOOGLE_GEMINI_BASE_URL = ' + psString(getValue('geminiBaseUrl')),
+        'gemini --model ' + getValue('geminiModel')
+      ].join('\n');
+    }
+
+    async function copyApplyScript(type) {
+      const missing = missingTestFields(type);
+      if (missing.length > 0) {
+        fieldIdsForLabels(type, missing).forEach(markFieldAttention);
+        showToast('缺少字段，未复制一键脚本：' + missing.join('、'));
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(applyScript(type));
+        showToast('一键配置脚本已复制');
+      } catch (error) {
+        setTestResult(type, 'warn', '复制失败。请手动复制配置内容。');
+      }
+    }
+
+    function clearTestResult(type) {
+      const result = testResultElement(type);
+      result.className = 'test-result';
+      result.textContent = '尚未测试。';
+    }
+
+    async function probeCapability(kind, baseUrl, apiKey, model) {
+      const request = capabilityRequest(kind, baseUrl, apiKey, model);
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 12000);
+      try {
+        const response = await fetch(request.url, {
+          method: 'POST',
+          headers: request.headers,
+          body: JSON.stringify(request.body),
+          signal: controller.signal
+        });
+        const text = await response.text();
+        return {
+          kind,
+          ok: response.ok,
+          status: response.status,
+          endpoint: request.url,
+          summary: response.ok ? '可用' : explainStatus(kind === 'responses' ? 'codex' : kind, response.status),
+          response: response.ok ? summarizeResponse(text) : parseErrorSummary(text)
+        };
+      } catch (error) {
+        return {
+          kind,
+          ok: false,
+          status: error && error.name === 'AbortError' ? 'timeout' : 'browser',
+          endpoint: request.url,
+          summary: error && error.name === 'AbortError' ? '测试超时' : '浏览器无法确认，可能是 CORS',
+          response: error && error.message ? error.message : ''
+        };
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    async function detectCapabilities() {
+      const baseUrl = getValue('detectBaseUrl');
+      const apiKey = getValue('detectApiKey');
+      const model = getValue('detectModel');
+      if (!baseUrl || !apiKey || !model) {
+        showToast('请先填写识别用 Base URL、API Key 和模型名');
+        return;
+      }
+      document.getElementById('capabilityResult').innerHTML = '<div class="capability-card warn"><strong>正在识别</strong>请稍候...</div>';
+      const kinds = ['claude', 'responses', 'chat', 'gemini'];
+      const results = await Promise.all(kinds.map((kind) => probeCapability(kind, baseUrl, apiKey, model)));
+      lastCapabilityResults = { baseUrl, apiKey, model, results };
+      renderCapabilityResults(results);
+      syncTabStatusFromCapabilities(results);
+      renderFlowSummary();
+      renderFlowWizard(false);
+      const available = results.filter((result) => result.ok).map((result) => capabilityLabel(result.kind));
+      showToast(available.length > 0 ? '推荐可用：' + available.join('、') : '暂未识别到明确可用协议');
+    }
+
+    function capabilityClass(result) {
+      if (result.ok) return 'ok';
+      if (result.status === 401 || result.status === 403 || result.status === 'browser' || result.status === 'timeout') return 'warn';
+      return 'bad';
+    }
+
+    function capabilityLabel(kind) {
+      return {
+        claude: 'Claude Code',
+        responses: 'Codex CLI',
+        chat: 'OpenAI SDK',
+        gemini: 'Gemini CLI'
+      }[kind] || kind;
+    }
+
+    function renderCapabilityResults(results) {
+      document.getElementById('capabilityResult').innerHTML = results.map((result) => {
+        const statusText = result.ok ? '可用' : (result.status === 'browser' ? '浏览器无法确认' : '不可用/待确认');
+        const reason = result.ok ? capabilityReason(result.kind) : result.summary;
+        const canApply = result.ok && result.kind !== 'chat';
+        const applyButtons = canApply ? '<div class="model-chip-row"><button class="model-chip" type="button" onclick="applyCapabilityToForm(\'' + result.kind + '\')">套用并进入配置</button></div>' : '';
+        return '<div class="capability-card ' + capabilityClass(result) + '">' +
+          '<strong>' + escapeHtml(capabilityLabel(result.kind)) + '</strong>' +
+          '<div>' + escapeHtml(statusText) + '</div>' +
+          '<div style="margin-top: 4px;">' + escapeHtml(reason) + '</div>' +
+          applyButtons +
+          '</div>';
+      }).join('');
+    }
+
+    function capabilityReason(kind) {
+      return {
+        claude: 'Anthropic Messages 可用，适合 Claude Code。',
+        responses: 'Responses API 可用，推荐用于 Codex CLI。',
+        chat: 'Chat Completions 可用，适合 OpenAI SDK 类工具。',
+        gemini: 'Gemini generateContent 可用，适合 Gemini CLI。'
+      }[kind] || '协议可用。';
+    }
+
+    function syncTabStatusFromCapabilities(results) {
+      const byKind = Object.fromEntries(results.map((item) => [item.kind, item]));
+      const map = {
+        claude: byKind.claude,
+        codex: byKind.responses,
+        gemini: byKind.gemini
+      };
+      Object.entries(map).forEach(([type, result]) => {
+        const el = document.getElementById(type + 'TabStatus');
+        if (!el || !result) return;
+        el.textContent = result.ok ? '可用' : (result.status === 'browser' ? '待确认' : '不可用');
+        el.style.color = result.ok ? '#047857' : (result.status === 'browser' ? '#92400e' : '#991b1b');
+      });
+    }
+
+    function applyCapabilityToForm(kind) {
+      if (!lastCapabilityResults) return;
+      const { baseUrl, apiKey, model } = lastCapabilityResults;
+      if (kind === 'claude') {
+        document.getElementById('claudeBaseUrl').value = normalizeUrlValue('claude', baseUrl);
+        document.getElementById('claudeApiKey').value = apiKey;
+        document.getElementById('claudeModel').value = model;
+        switchPage('claude');
+      } else if (kind === 'responses' || kind === 'chat') {
+        document.getElementById('codexBaseUrl').value = normalizeUrlValue('codex', baseUrl);
+        document.getElementById('codexApiKey').value = apiKey;
+        document.getElementById('codexModel').value = model;
+        switchPage('codex');
+      } else if (kind === 'gemini') {
+        document.getElementById('geminiBaseUrl').value = normalizeUrlValue('gemini', baseUrl);
+        document.getElementById('geminiApiKey').value = apiKey;
+        document.getElementById('geminiModel').value = model;
+        switchPage('gemini');
+      }
+      updateAll();
+      flowStepIndex = 2;
+      renderFlowWizard(true);
+      renderFlowSummary();
+      showToast('已套用到表单');
+    }
+
+    function capabilityScript() {
+      const baseUrl = getValue('detectBaseUrl');
+      const apiKey = getValue('detectApiKey');
+      const model = getValue('detectModel');
+      const requests = ['claude', 'responses', 'chat', 'gemini'].map((kind) => capabilityRequest(kind, baseUrl, apiKey, model));
+      if (currentPlatform() === 'bash') {
+        return requests.map((request) => {
+          const headers = Object.entries(request.headers).map(([key, value]) => "  -H " + shellQuote(key + ': ' + value)).join(" \\\n");
+          return 'echo ' + shellQuote(request.url) + '\n' +
+            'curl -sS -X POST ' + shellQuote(request.url) + ' \\\n' +
+            headers + ' \\\n' +
+            '  -d ' + shellQuote(JSON.stringify(request.body)) + '\n';
+        }).join('\n');
+      }
+      return requests.map((request) => [
+        'Write-Host ' + psString(request.url),
+        '$uri = ' + psString(request.url),
+        '$headers = ' + psHashtable(request.headers),
+        '$body = ' + psHereString(jsonObject(request.body)),
+        'try { Invoke-RestMethod -Method Post -Uri $uri -Headers $headers -Body $body | ConvertTo-Json -Depth 20 } catch { $_.Exception.Message }'
+      ].join('\n')).join('\n\n');
+    }
+
+    async function copyCapabilityScript() {
+      const missing = [
+        ['detectBaseUrl', 'Base URL'],
+        ['detectApiKey', 'API Key'],
+        ['detectModel', '模型名']
+      ].filter(([id]) => !getValue(id));
+      if (missing.length > 0) {
+        clearFieldAttention();
+        missing.forEach(([id]) => markFieldAttention(id));
+        showToast('缺少字段，未复制识别脚本：' + missing.map(([, label]) => label).join('、'));
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(capabilityScript());
+        showToast('识别脚本已复制');
+      } catch (error) {
+        showToast('复制失败');
+      }
+    }
+
+    function normalizeUrlValue(type, value) {
+      let url = trimTrailingSlash(value.trim());
+      if (type === 'claude') {
+        return url.replace(/\/v1\/messages$/, '').replace(/\/messages$/, '');
+      }
+      if (type === 'codex') {
+        return url.replace(/\/(responses|chat\/completions)$/, '').replace(/\/$/, '');
+      }
+      return url.replace(/\/models\/[^/]+:generateContent$/, '').replace(/\/v1beta$/, '').replace(/\/v1$/, '');
+    }
+
+    function normalizeUrl(type) {
+      const id = type + 'BaseUrl';
+      document.getElementById(id).value = normalizeUrlValue(type, getValue(id));
+      updateAll();
+      showToast('URL 已按当前 CLI 规则修正');
+    }
+
+    function supportInfo(type) {
+      const result = lastTestResults[type] || {};
+      const baseUrl = getValue(type + 'BaseUrl');
+      return [
+        'CLI：' + ({ claude: 'Claude Code', codex: 'Codex CLI', gemini: 'Gemini CLI' }[type] || type),
+        'Base URL：' + baseUrl,
+        'Endpoint：' + (result.endpoint || endpointFor(type)),
+        'HTTP 状态：' + (result.status || '未测试'),
+        '模型：' + getModelForType(type),
+        'API Key：' + redactedKeyForType(type),
+        '协议：' + protocolName(type),
+        '错误/返回摘要：' + (result.response || '未测试'),
+        '页面建议：' + (result.advice || '请先执行 API Key 连通性测试。')
+      ].join('\n');
+    }
+
+    async function copySupportInfo(type) {
+      try {
+        await navigator.clipboard.writeText(supportInfo(type));
+        showToast('脱敏排错信息已复制');
+      } catch (error) {
+        setTestResult(type, 'warn', '复制失败，请手动复制测试结果。');
+      }
+    }
+
+    function applyCodexPreset() {
+      const preset = getValue('codexContextPreset');
+      if (!preset) {
+        return;
+      }
+      document.getElementById('codexContext').value = preset;
+      document.getElementById('codexCompact').value = String(codexPresets[preset] || Math.floor(Number(preset) * 0.8));
+      updateAll();
+    }
+
+    function setCodexPresetFromValues() {
+      const context = getValue('codexContext');
+      const compact = Number(getValue('codexCompact'));
+      const expected = codexPresets[context];
+      const preset = document.getElementById('codexContextPreset');
+      preset.value = expected && compact === expected ? context : '';
+    }
+
+    function validateCodex() {
+      const container = document.getElementById('codexValidation');
+      if (!container) {
+        return;
+      }
+
+      const messages = [];
+      let score = 100;
+      const baseUrl = getValue('codexBaseUrl');
+      const provider = getValue('codexProvider');
+      const context = Number(getValue('codexContext'));
+      const compact = Number(getValue('codexCompact'));
+
+      if (!baseUrl) {
+        messages.push(['error', 'Codex Base URL 不能为空。']);
+        score -= 35;
+      } else {
+        if (/\/(responses|chat\/completions)\/?$/.test(baseUrl)) {
+          messages.push(['error', 'Codex Base URL 不要填到具体 endpoint，应该填到 /v1。']);
+          score -= 35;
+        } else if (!/\/v1\/?$/.test(baseUrl)) {
+          messages.push(['warn', 'Codex OpenAI 兼容 Base URL 通常需要带 /v1。']);
+          score -= 15;
+        }
+      }
+
+      if (!/^[A-Za-z0-9_-]+$/.test(provider)) {
+        messages.push(['error', 'Provider 名称只能使用英文、数字、下划线或短横线。']);
+        score -= 20;
+      }
+
+      if (!Number.isFinite(context) || context <= 0) {
+        messages.push(['error', '上下文窗口必须是大于 0 的数字。']);
+        score -= 20;
+      }
+
+      if (!Number.isFinite(compact) || compact <= 0) {
+        messages.push(['error', '自动压缩阈值必须是大于 0 的数字。']);
+        score -= 20;
+      } else if (Number.isFinite(context) && compact >= context) {
+        messages.push(['error', '自动压缩阈值必须小于上下文窗口。']);
+        score -= 25;
+      } else if (Number.isFinite(context) && compact > context * 0.9) {
+        messages.push(['warn', '自动压缩阈值过高，建议使用上下文窗口的 70% 到 80%。']);
+        score -= 10;
+      }
+
+      if (messages.length === 0) {
+        messages.push(['ok', 'Codex 配置格式检查通过。']);
+      }
+
+      renderValidation(container, Math.max(0, score), messages);
+    }
+
+    function validateClaude() {
+      const container = document.getElementById('claudeValidation');
+      if (!container) {
+        return;
+      }
+
+      const messages = [];
+      let score = 100;
+      const baseUrl = getValue('claudeBaseUrl');
+
+      if (!baseUrl) {
+        messages.push(['error', 'Claude Base URL 不能为空。']);
+        score -= 35;
+      } else {
+        if (/\/messages\/?$/.test(baseUrl)) {
+          messages.push(['error', 'Claude Base URL 不要填到 /messages，生成器会自动拼接。']);
+          score -= 35;
+        } else if (/\/v1\/?$/.test(baseUrl)) {
+          messages.push(['warn', '部分 Anthropic 兼容站点要求 Base URL 不带 /v1；如果测试 404，请用一键修正去掉版本路径。']);
+          score -= 10;
+        }
+      }
+
+      if (!getValue('claudeApiKey')) {
+        messages.push(['error', 'API Key 不能为空。']);
+        score -= 25;
+      }
+
+      if (!getValue('claudeModel')) {
+        messages.push(['error', '模型名不能为空。']);
+        score -= 25;
+      }
+
+      if (messages.length === 0) {
+        messages.push(['ok', 'Claude 配置格式检查通过。']);
+      }
+
+      renderValidation(container, Math.max(0, score), messages);
+    }
+
+    function validateGemini() {
+      const container = document.getElementById('geminiValidation');
+      if (!container) {
+        return;
+      }
+
+      const messages = [];
+      let score = 100;
+      const baseUrl = getValue('geminiBaseUrl');
+
+      if (!baseUrl) {
+        messages.push(['error', 'Gemini Base URL 不能为空。']);
+        score -= 35;
+      } else if (/\/models\/.+:generateContent\/?$/.test(baseUrl)) {
+        messages.push(['error', 'Gemini Base URL 不要填到具体模型 generateContent 端点。']);
+        score -= 35;
+      }
+
+      if (!getValue('geminiApiKey')) {
+        messages.push(['error', 'API Key 不能为空。']);
+        score -= 25;
+      }
+
+      if (!getValue('geminiModel')) {
+        messages.push(['error', '模型名不能为空。']);
+        score -= 25;
+      }
+
+      if (messages.length === 0) {
+        messages.push(['ok', 'Gemini 配置格式检查通过。']);
+        messages.push(['warn', 'Gemini CLI 的第三方 Base URL 仍取决于 CLI 版本和站点兼容性，建议以连通性测试为准。']);
+        score -= 5;
+      }
+
+      renderValidation(container, Math.max(0, score), messages);
+    }
+
+    function renderValidation(container, score, messages) {
+      const label = score >= 90 ? '高' : score >= 70 ? '中' : '低';
+      const headKind = score >= 90 ? 'ok' : score >= 70 ? 'warn' : 'error';
+      container.innerHTML = [
+        '<div class="validation-head ' + headKind + '">配置健康度：' + score + '/100（' + label + '）</div>',
+        messages.map(([kind, message]) => (
+          '<div class="validation-item ' + kind + '">' + escapeHtml(message) + '</div>'
+        )).join('')
+      ].join('');
+    }
+
+    function readSavedConfigs() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(storageKey) || '{}');
+        return parsed && typeof parsed === 'object' ? parsed : {};
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function writeSavedConfigs(data) {
+      localStorage.setItem(storageKey, JSON.stringify(data));
+    }
+
+    function cloneSavedData(includeKeys) {
+      const source = readSavedConfigs();
+      const copy = JSON.parse(JSON.stringify(source));
+      if (!includeKeys) {
+        pages.forEach((type) => {
+          (copy[type] || []).forEach((item) => {
+            configFields[type].forEach((id) => {
+              if (/ApiKey$/.test(id) && item.data) {
+                item.data[id] = '';
+              }
+            });
+          });
+        });
+      }
+      return copy;
+    }
+
+    function exportSavedConfigs(includeKeys) {
+      const payload = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        includeKeys,
+        data: cloneSavedData(includeKeys)
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = includeKeys ? 'cli-configs-with-keys.json' : 'cli-configs-no-keys.json';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      showToast(includeKeys ? '已导出配置（包含 API Key）' : '已导出配置（不含 API Key）');
+    }
+
+    function triggerImportConfigs() {
+      const input = document.getElementById('importConfigFile');
+      if (input) {
+        input.value = '';
+        input.click();
+      }
+    }
+
+    async function importSavedConfigs(file) {
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const parsed = JSON.parse(text);
+        const incoming = parsed.data && typeof parsed.data === 'object' ? parsed.data : parsed;
+        const saved = readSavedConfigs();
+        pages.forEach((type) => {
+          const current = Array.isArray(saved[type]) ? saved[type] : [];
+          const seen = new Set(current.map((item) => JSON.stringify(item.data || {}) + '|' + (item.name || '')));
+          const additions = (Array.isArray(incoming[type]) ? incoming[type] : []).filter((item) => {
+            const key = JSON.stringify(item.data || {}) + '|' + (item.name || '');
+            if (seen.has(key)) return false;
+            seen.add(key);
+            item.id = Date.now() + '-' + Math.random().toString(36).slice(2, 9);
+            item.importedAt = new Date().toISOString();
+            return true;
+          });
+          saved[type] = current.concat(additions).slice(0, 60);
+        });
+        writeSavedConfigs(saved);
+        renderSavedLists();
+        renderFlowSummary();
+        showToast('导入完成');
+      } catch (error) {
+        showToast('导入失败：JSON 格式不正确');
+      }
+    }
+
+    function testStatusFromResult(result) {
+      if (!result) {
+        return null;
+      }
+      return {
+        ok: Boolean(result.ok),
+        status: result.status,
+        endpoint: result.endpoint,
+        model: result.model,
+        protocol: result.protocol,
+        testedAt: new Date().toISOString(),
+        advice: result.advice || ''
+      };
+    }
+
+    function matchingLastTestResult(type) {
+      const result = lastTestResults[type];
+      if (!result) return null;
+      return result.endpoint === endpointFor(type) && result.model === getModelForType(type) ? result : null;
+    }
+
+    function currentConfigIsSaved(type) {
+      const id = loadedConfigIds[type];
+      if (!id) return false;
+      const list = readSavedConfigs()[type] || [];
+      const item = list.find((entry) => entry.id === id);
+      return Boolean(item && JSON.stringify(item.data || {}) === JSON.stringify(getFormData(type)));
+    }
+
+    function markCurrentConfigTestStatus(type, result) {
+      const id = loadedConfigIds[type];
+      if (!id) {
+        renderSavedLists();
+        renderFinalChecklist();
+        return;
+      }
+      const saved = readSavedConfigs();
+      const list = Array.isArray(saved[type]) ? saved[type] : [];
+      const item = list.find((entry) => entry.id === id);
+      if (!item) {
+        renderSavedLists();
+        renderFinalChecklist();
+        return;
+      }
+      item.test = testStatusFromResult(result);
+      item.updatedAt = new Date().toISOString();
+      writeSavedConfigs(saved);
+      renderSavedLists();
+      renderFlowSummary();
+      renderFinalChecklist();
+    }
+
+    function getFormData(type) {
+      const data = {};
+      configFields[type].forEach((id) => {
+        data[id] = getValue(id);
+      });
+      return data;
+    }
+
+    function setFormData(type, data) {
+      configFields[type].forEach((id) => {
+        if (Object.prototype.hasOwnProperty.call(data, id)) {
+          document.getElementById(id).value = data[id];
+        }
+      });
+      updateAll();
+    }
+
+    function saveConfig(type) {
+      const missing = missingTestFields(type);
+      if (missing.length > 0) {
+        fieldIdsForLabels(type, missing).forEach(markFieldAttention);
+        showToast('缺少字段，未保存：' + missing.join('、'));
+        return;
+      }
+      const nameInput = document.getElementById(type + 'SaveName');
+      const name = nameInput.value.trim() || defaultSaveName(type);
+      const saved = readSavedConfigs();
+      const list = Array.isArray(saved[type]) ? saved[type] : [];
+      const now = new Date().toISOString();
+      const item = {
+        id: Date.now() + '-' + Math.random().toString(36).slice(2, 9),
+        name,
+        createdAt: now,
+        updatedAt: now,
+        test: testStatusFromResult(matchingLastTestResult(type)),
+        data: getFormData(type)
+      };
+
+      list.unshift(item);
+      loadedConfigIds[type] = item.id;
+      saved[type] = list.slice(0, 30);
+      writeSavedConfigs(saved);
+      renderSavedLists();
+      renderFlowSummary();
+      renderFinalChecklist();
+      showToast('已新增保存配置');
+    }
+
+    function overwriteLoadedConfig(type) {
+      const missing = missingTestFields(type);
+      if (missing.length > 0) {
+        fieldIdsForLabels(type, missing).forEach(markFieldAttention);
+        showToast('缺少字段，未覆盖：' + missing.join('、'));
+        return;
+      }
+      const id = loadedConfigIds[type];
+      if (!id) {
+        showToast('请先从保存列表载入一项，再覆盖');
+        return;
+      }
+
+      const saved = readSavedConfigs();
+      const list = Array.isArray(saved[type]) ? saved[type] : [];
+      const item = list.find((entry) => entry.id === id);
+      if (!item) {
+        loadedConfigIds[type] = null;
+        showToast('当前载入项已不存在');
+        renderSavedLists();
+        return;
+      }
+
+      const nameInput = document.getElementById(type + 'SaveName');
+      item.name = nameInput.value.trim() || item.name || defaultSaveName(type);
+      item.data = getFormData(type);
+      item.test = testStatusFromResult(matchingLastTestResult(type));
+      item.updatedAt = new Date().toISOString();
+      writeSavedConfigs(saved);
+      renderSavedLists();
+      renderFlowSummary();
+      renderFinalChecklist();
+      showToast('已覆盖当前载入配置');
+    }
+
+    async function loadConfig(type, id) {
+      const saved = readSavedConfigs();
+      const list = Array.isArray(saved[type]) ? saved[type] : [];
+      const item = list.find((entry) => entry.id === id);
+      if (!item) {
+        showToast('未找到保存项');
+        renderSavedLists();
+        return;
+      }
+      loadedConfigIds[type] = id;
+      item.lastUsedAt = new Date().toISOString();
+      writeSavedConfigs(saved);
+      document.getElementById(type + 'SaveName').value = item.name;
+      setFormData(type, item.data || {});
+
+      // 自动复制配置内容到剪贴板
+      try {
+        let configText = '';
+        if (type === 'claude') {
+          configText = document.getElementById('claudeOutput').textContent;
+        } else if (type === 'codex') {
+          configText = document.getElementById('codexOutput').textContent;
+        } else if (type === 'gemini') {
+          configText = document.getElementById('geminiOutput').textContent;
+        }
+
+        await navigator.clipboard.writeText(configText);
+
+        // 显示打开配置文件的命令
+        showLoadModal(type, item.name);
+      } catch (error) {
+        showToast('已载入配置');
+      }
+    }
+
+    function showLoadModal(type, configName) {
+      const commands = {
+        claude: 'notepad "$env:USERPROFILE\\.claude\\settings.json"',
+        codex: 'notepad "$env:USERPROFILE\\.codex\\config.toml"',
+        gemini: ''
+      };
+
+      const filePaths = {
+        claude: '%USERPROFILE%\\.claude\\settings.json',
+        codex: '%USERPROFILE%\\.codex\\config.toml',
+        gemini: '环境变量'
+      };
+
+      const command = commands[type];
+      const filePath = filePaths[type];
+      const safeName = escapeHtml(configName);
+      const safeFilePath = escapeHtml(filePath);
+      const safeCommand = escapeHtml(command || '');
+
+      let bodyHTML = `
+        <div class="modal-section">
+          <div class="modal-section-title">📦 配置名称</div>
+          <div class="modal-section-content">${safeName}</div>
+        </div>
+
+        <div class="modal-section">
+          <div class="modal-section-title">✅ 已完成</div>
+          <div class="modal-section-content">
+            ✓ 配置已载入到表单<br>
+            ✓ 配置内容已复制到剪贴板
+          </div>
+        </div>
+      `;
+
+      if (command) {
+        bodyHTML += `
+          <div class="modal-section">
+            <div class="modal-section-title">📝 配置文件位置</div>
+            <div class="modal-code">${safeFilePath}</div>
+          </div>
+
+          <div class="modal-section">
+            <div class="modal-section-title">💡 下一步操作</div>
+            <div class="modal-highlight">
+              <div class="modal-highlight-text">在 PowerShell 中执行以下命令打开配置文件：</div>
+              <div class="modal-code" id="modalCommand">${safeCommand}</div>
+            </div>
+            <div class="modal-section-content" style="margin-top: 12px;">
+              然后按 <strong>Ctrl+V</strong> 粘贴剪贴板中的配置内容并保存即可！
+            </div>
+          </div>
+        `;
+      } else {
+        bodyHTML += `
+          <div class="modal-section">
+            <div class="modal-section-title">💡 下一步操作</div>
+            <div class="modal-highlight">
+              <div class="modal-highlight-text">在 PowerShell 中粘贴并执行剪贴板中的命令即可完成配置！</div>
+            </div>
+          </div>
+        `;
+      }
+
+      document.getElementById('modalTitle').textContent = '✅ 配置已载入';
+      document.getElementById('modalBody').innerHTML = bodyHTML;
+      document.getElementById('modalOverlay').classList.add('show');
+    }
+
+    function showFieldHelp(field) {
+      const help = {
+        codexProvider: {
+          title: 'Provider 名称填写建议',
+          body: `
+            <div class="modal-section">
+              <div class="modal-section-title">含义</div>
+              <div class="modal-section-content">
+                Provider 名称是 Codex 本地配置里的供应商 ID，不是第三方站点必须识别的名字。
+                它需要和 <code>model_provider</code> 以及 <code>[model_providers.xxx]</code> 里的 <code>xxx</code> 保持一致。
+              </div>
+            </div>
+            <div class="modal-section">
+              <div class="modal-section-title">推荐填写</div>
+              <div class="modal-code">third_party</div>
+              <div class="modal-section-content" style="margin-top: 10px;">
+                也可以按站点命名，例如 <code>windhub</code>、<code>oneapi</code>、<code>newapi</code>、<code>openrouter</code>。
+              </div>
+            </div>
+            <div class="modal-section">
+              <div class="modal-section-title">规则</div>
+              <div class="modal-section-content">
+                只用英文、数字、下划线、短横线；不要用中文、空格，也不要用 <code>openai</code>、<code>ollama</code>、<code>lmstudio</code> 这类容易和内置 provider 混淆的名称。
+              </div>
+            </div>
+          `
+        },
+        codexContext: {
+          title: '上下文窗口填写建议',
+          body: `
+            <div class="modal-section">
+              <div class="modal-section-title">含义</div>
+              <div class="modal-section-content">
+                上下文窗口是模型真实支持的最大 token 数。填大不会让模型真的变大，只会让 Codex 误判还能继续塞上下文，后面更容易报错。
+              </div>
+            </div>
+            <div class="modal-section">
+              <div class="modal-section-title">推荐填写</div>
+              <div class="modal-code">不知道真实窗口：200000
+普通中转站模型：128000 或 200000
+Codex 类 400K 模型：400000
+1M 模型且站点确认支持：1000000</div>
+            </div>
+            <div class="modal-section">
+              <div class="modal-section-title">默认建议</div>
+              <div class="modal-highlight">
+                <div class="modal-highlight-text">不确定时先填 <code>200000</code>。如果中转站明确标注模型支持 400K，再改成 <code>400000</code>。</div>
+              </div>
+            </div>
+          `
+        },
+        codexCompact: {
+          title: '自动压缩阈值填写建议',
+          body: `
+            <div class="modal-section">
+              <div class="modal-section-title">含义</div>
+              <div class="modal-section-content">
+                自动压缩阈值是上下文达到多少 token 时，Codex 开始压缩历史。它应该小于上下文窗口。
+              </div>
+            </div>
+            <div class="modal-section">
+              <div class="modal-section-title">推荐公式</div>
+              <div class="modal-code">自动压缩阈值 = 上下文窗口 × 0.8</div>
+              <div class="modal-section-content" style="margin-top: 10px;">
+                大项目、长日志、长 diff 场景可以更保守，用 <code>上下文窗口 × 0.7</code>。
+              </div>
+            </div>
+            <div class="modal-section">
+              <div class="modal-section-title">常用值</div>
+              <div class="modal-code">上下文窗口 200000 -> 自动压缩阈值 160000
+上下文窗口 400000 -> 自动压缩阈值 320000
+上下文窗口 1000000 -> 自动压缩阈值 800000</div>
+            </div>
+          `
+        }
+      }[field];
+
+      if (!help) {
+        return;
+      }
+
+      document.getElementById('modalTitle').textContent = help.title;
+      document.getElementById('modalBody').innerHTML = help.body;
+      document.getElementById('modalOverlay').classList.add('show');
+    }
+
+    function closeModal(event) {
+      if (!event || event.target.id === 'modalOverlay') {
+        document.getElementById('modalOverlay').classList.remove('show');
+      }
+    }
+
+    async function copyModalCommand() {
+      const commandElement = document.getElementById('modalCommand');
+      const bodyElement = document.getElementById('modalBody');
+      const text = commandElement ? commandElement.textContent : (bodyElement ? bodyElement.innerText : '');
+      if (!text) {
+        showToast('没有可复制内容');
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast(commandElement ? '命令已复制' : '内容已复制');
+      } catch (error) {
+        showToast('复制失败');
+      }
+    }
+
+    function deleteConfig(type, id) {
+      const saved = readSavedConfigs();
+      saved[type] = (saved[type] || []).filter((entry) => entry.id !== id);
+      if (loadedConfigIds[type] === id) {
+        loadedConfigIds[type] = null;
+      }
+      if (compareBuffer[type] && compareBuffer[type].id === id) {
+        compareBuffer[type] = null;
+      }
+      writeSavedConfigs(saved);
+      renderSavedLists();
+      showToast('已删除保存项');
+    }
+
+    function cloneConfig(type, id) {
+      const saved = readSavedConfigs();
+      const list = Array.isArray(saved[type]) ? saved[type] : [];
+      const item = list.find((entry) => entry.id === id);
+      if (!item) {
+        showToast('未找到保存项');
+        renderSavedLists();
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const clone = {
+        id: Date.now() + '-' + Math.random().toString(36).slice(2, 9),
+        name: (item.name || defaultSaveName(type)) + ' 副本',
+        createdAt: now,
+        updatedAt: now,
+        pinned: false,
+        test: item.test ? Object.assign({}, item.test) : null,
+        data: Object.assign({}, item.data || {})
+      };
+      saved[type] = [clone].concat(list).slice(0, 30);
+      writeSavedConfigs(saved);
+      renderSavedLists();
+      showToast('已克隆保存项');
+    }
+
+    function togglePinConfig(type, id) {
+      const saved = readSavedConfigs();
+      const list = Array.isArray(saved[type]) ? saved[type] : [];
+      const item = list.find((entry) => entry.id === id);
+      if (!item) {
+        showToast('未找到保存项');
+        renderSavedLists();
+        return;
+      }
+
+      item.pinned = !item.pinned;
+      item.updatedAt = new Date().toISOString();
+      writeSavedConfigs(saved);
+      renderSavedLists();
+      showToast(item.pinned ? '已固定到顶部' : '已取消固定');
+    }
+
+    function compareConfig(type, id) {
+      const list = readSavedConfigs()[type] || [];
+      const item = list.find((entry) => entry.id === id);
+      if (!item) {
+        showToast('未找到保存项');
+        renderSavedLists();
+        return;
+      }
+
+      if (!compareBuffer[type]) {
+        compareBuffer[type] = item;
+        showToast('已选择对比基准，再点另一条配置的对比');
+        renderSavedLists();
+        return;
+      }
+
+      const first = compareBuffer[type];
+      compareBuffer[type] = null;
+      showCompareModal(type, first, item);
+      renderSavedLists();
+    }
+
+    function showCompareModal(type, first, second) {
+      const labels = fieldLabels(type);
+      const firstData = first.data || {};
+      const secondData = second.data || {};
+      const rows = configFields[type].map((id) => {
+        const a = firstData[id] || '';
+        const b = secondData[id] || '';
+        const same = a === b;
+        return [
+          '<div class="modal-section">',
+          '<div class="modal-section-title">' + escapeHtml(labels[id] || id) + (same ? '（相同）' : '（不同）') + '</div>',
+          '<div class="modal-code">A: ' + escapeHtml(redactField(id, a)) + '\nB: ' + escapeHtml(redactField(id, b)) + '</div>',
+          '</div>'
+        ].join('');
+      }).join('');
+
+      document.getElementById('modalTitle').textContent = '保存配置对比';
+      document.getElementById('modalBody').innerHTML = [
+        '<div class="modal-section"><div class="modal-section-title">对比对象</div>',
+        '<div class="modal-section-content">A：' + escapeHtml(first.name || defaultSaveName(type)) + '<br>B：' + escapeHtml(second.name || defaultSaveName(type)) + '</div></div>',
+        rows
+      ].join('');
+      document.getElementById('modalOverlay').classList.add('show');
+    }
+
+    function fieldLabels(type) {
+      return {
+        claude: { claudeBaseUrl: 'Base URL', claudeApiKey: 'API Key', claudeModel: '模型名' },
+        codex: {
+          codexBaseUrl: 'Base URL',
+          codexApiKey: 'API Key',
+          codexModel: '模型名',
+          codexContextPreset: '上下文预设',
+          codexProvider: 'Provider 名称',
+          codexContext: '上下文窗口',
+          codexCompact: '自动压缩阈值'
+        },
+        gemini: { geminiBaseUrl: 'Base URL', geminiApiKey: 'API Key', geminiModel: '模型名' }
+      }[type] || {};
+    }
+
+    function redactField(id, value) {
+      if (!/apiKey/i.test(id)) {
+        return value || '空';
+      }
+      const text = String(value || '');
+      if (!text) {
+        return '空';
+      }
+      if (text.length <= 10) {
+        return text.slice(0, 3) + '***';
+      }
+      return text.slice(0, 6) + '...' + text.slice(-4);
+    }
+
+    function renameConfig(type, id) {
+      const saved = readSavedConfigs();
+      const list = Array.isArray(saved[type]) ? saved[type] : [];
+      const item = list.find((entry) => entry.id === id);
+      if (!item) {
+        showToast('未找到保存项');
+        renderSavedLists();
+        return;
+      }
+
+      const nextName = window.prompt('输入新的配置名称', item.name || defaultSaveName(type));
+      if (nextName === null) {
+        return;
+      }
+
+      const normalized = nextName.trim();
+      if (!normalized) {
+        showToast('名称不能为空');
+        return;
+      }
+
+      item.name = normalized;
+      item.updatedAt = new Date().toISOString();
+      writeSavedConfigs(saved);
+      renderSavedLists();
+      showToast('已重命名');
+    }
+
+    function defaultSaveName(type) {
+      const names = {
+        claude: 'Claude 第三方站点',
+        codex: 'Codex 第三方站点',
+        gemini: 'Gemini 第三方站点'
+      };
+      return names[type] || '第三方站点';
+    }
+
+    function formatSavedTime(value) {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) {
+        return '未知时间';
+      }
+      return date.toLocaleString('zh-CN', { hour12: false });
+    }
+
+    function savedSummary(type, data) {
+      const fields = {
+        claude: ['claudeBaseUrl', 'claudeModel'],
+        codex: ['codexBaseUrl', 'codexModel'],
+        gemini: ['geminiBaseUrl', 'geminiModel']
+      }[type] || [];
+
+      return fields
+        .map((id) => data && data[id] ? data[id] : '')
+        .filter(Boolean)
+        .join(' | ');
+    }
+
+    function savedTestSummary(item) {
+      if (!item.test) {
+        return '测试状态：未测试';
+      }
+      return [
+        '测试状态：' + (item.test.ok ? '通过' : '失败/待确认'),
+        'HTTP：' + (item.test.status || '无'),
+        item.test.testedAt ? '测试时间：' + formatSavedTime(item.test.testedAt) : ''
+      ].filter(Boolean).join(' | ');
+    }
+
+    function sortSavedList(list) {
+      return list.slice().sort((a, b) => {
+        if (Boolean(a.pinned) !== Boolean(b.pinned)) {
+          return a.pinned ? -1 : 1;
+        }
+        const aTime = new Date(a.lastUsedAt || a.updatedAt || a.createdAt || 0).getTime();
+        const bTime = new Date(b.lastUsedAt || b.updatedAt || b.createdAt || 0).getTime();
+        return bTime - aTime;
+      });
+    }
+
+    function modelFieldForType(type) {
+      return {
+        claude: 'claudeModel',
+        codex: 'codexModel',
+        gemini: 'geminiModel'
+      }[type];
+    }
+
+    function renderModelFavorites(saved) {
+      pages.forEach((type) => {
+        const container = document.getElementById(type + 'ModelFavorites');
+        const modelField = modelFieldForType(type);
+        if (!container || !modelField) {
+          return;
+        }
+
+        const models = [];
+        (saved[type] || []).forEach((item) => {
+          const model = item.data && item.data[modelField];
+          if (model && !models.includes(model)) {
+            models.push(model);
+          }
+        });
+
+        container.textContent = '';
+        models.slice(0, 6).forEach((model) => {
+          const chip = document.createElement('button');
+          chip.type = 'button';
+          chip.className = 'model-chip';
+          chip.textContent = model;
+          chip.title = '填入模型名';
+          chip.addEventListener('click', () => {
+            document.getElementById(modelField).value = model;
+            updateAll();
+          });
+          container.appendChild(chip);
+        });
+      });
+    }
+
+    function renderSavedLists() {
+      const saved = readSavedConfigs();
+      renderModelFavorites(saved);
+      pages.forEach((type) => {
+        const container = document.getElementById(type + 'SavedList');
+        const list = sortSavedList(Array.isArray(saved[type]) ? saved[type] : []);
+        container.textContent = '';
+
+        if (list.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'empty-state';
+          empty.textContent = '暂无保存配置';
+          container.appendChild(empty);
+          return;
+        }
+
+        list.forEach((item) => {
+          const row = document.createElement('div');
+          row.className = 'saved-item';
+          row.classList.toggle('pinned', Boolean(item.pinned));
+
+          const info = document.createElement('div');
+          const name = document.createElement('div');
+          name.className = 'saved-name';
+          if (item.pinned) {
+            const pin = document.createElement('span');
+            pin.className = 'pin-mark';
+            pin.textContent = '固定';
+            name.appendChild(pin);
+          }
+          name.appendChild(document.createTextNode(item.name || defaultSaveName(type)));
+          const meta = document.createElement('div');
+          meta.className = 'saved-meta';
+          meta.textContent = [
+            '保存：' + formatSavedTime(item.createdAt || item.updatedAt),
+            '更新：' + formatSavedTime(item.updatedAt || item.createdAt),
+            item.lastUsedAt ? '最近使用：' + formatSavedTime(item.lastUsedAt) : ''
+          ].filter(Boolean).join(' | ');
+          const detail = document.createElement('div');
+          detail.className = 'saved-detail';
+          detail.textContent = [
+            savedSummary(type, item.data) || '未记录 Base URL / 模型',
+            savedTestSummary(item)
+          ].join(' | ');
+          info.append(name, meta, detail);
+
+          const buttons = document.createElement('div');
+          buttons.className = 'saved-buttons';
+          const loadButton = document.createElement('button');
+          loadButton.type = 'button';
+          loadButton.className = 'small-btn';
+          loadButton.textContent = '载入';
+          loadButton.addEventListener('click', () => loadConfig(type, item.id));
+          const pinButton = document.createElement('button');
+          pinButton.type = 'button';
+          pinButton.className = 'small-btn';
+          pinButton.textContent = item.pinned ? '取消固定' : '固定';
+          pinButton.addEventListener('click', () => togglePinConfig(type, item.id));
+          const cloneButton = document.createElement('button');
+          cloneButton.type = 'button';
+          cloneButton.className = 'small-btn';
+          cloneButton.textContent = '克隆';
+          cloneButton.addEventListener('click', () => cloneConfig(type, item.id));
+          const compareButton = document.createElement('button');
+          compareButton.type = 'button';
+          compareButton.className = 'small-btn';
+          compareButton.textContent = compareBuffer[type] ? '选为 B' : '对比';
+          compareButton.addEventListener('click', () => compareConfig(type, item.id));
+          const renameButton = document.createElement('button');
+          renameButton.type = 'button';
+          renameButton.className = 'small-btn';
+          renameButton.textContent = '重命名';
+          renameButton.addEventListener('click', () => renameConfig(type, item.id));
+          const deleteButton = document.createElement('button');
+          deleteButton.type = 'button';
+          deleteButton.className = 'small-btn danger-btn';
+          deleteButton.textContent = '删除';
+          deleteButton.addEventListener('click', () => deleteConfig(type, item.id));
+          buttons.append(loadButton, pinButton, cloneButton, compareButton, renameButton, deleteButton);
+
+          row.append(info, buttons);
+          container.appendChild(row);
+        });
+      });
+      renderSimpleSavedLists(saved);
+    }
+
+    function renderSimpleSavedLists(saved = readSavedConfigs()) {
+      pages.forEach((type) => {
+        const container = document.getElementById('simple' + capitalize(type) + 'SavedList');
+        if (!container) return;
+        const list = sortSavedList(Array.isArray(saved[type]) ? saved[type] : []);
+        container.textContent = '';
+
+        if (list.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'empty-state';
+          empty.textContent = '暂无保存配置';
+          container.appendChild(empty);
+          return;
+        }
+
+        list.forEach((item) => {
+          const row = document.createElement('div');
+          row.className = 'saved-item';
+          row.classList.toggle('pinned', Boolean(item.pinned));
+
+          const info = document.createElement('div');
+          const name = document.createElement('div');
+          name.className = 'saved-name';
+          if (item.pinned) {
+            const pin = document.createElement('span');
+            pin.className = 'pin-mark';
+            pin.textContent = '固定';
+            name.appendChild(pin);
+          }
+          name.appendChild(document.createTextNode(item.name || defaultSaveName(type)));
+
+          const meta = document.createElement('div');
+          meta.className = 'saved-meta';
+          meta.textContent = [
+            '保存：' + formatSavedTime(item.createdAt || item.updatedAt),
+            item.lastUsedAt ? '最近使用：' + formatSavedTime(item.lastUsedAt) : ''
+          ].filter(Boolean).join(' | ');
+
+          const detail = document.createElement('div');
+          detail.className = 'saved-detail';
+          detail.textContent = savedSummary(type, item.data) || '未记录 Base URL / 模型';
+          info.append(name, meta, detail);
+
+          const buttons = document.createElement('div');
+          buttons.className = 'saved-buttons';
+
+          const loadButton = document.createElement('button');
+          loadButton.type = 'button';
+          loadButton.className = 'small-btn';
+          loadButton.textContent = '载入';
+          loadButton.addEventListener('click', () => loadSimpleConfig(type, item.id));
+
+          const renameButton = document.createElement('button');
+          renameButton.type = 'button';
+          renameButton.className = 'small-btn';
+          renameButton.textContent = '重命名';
+          renameButton.addEventListener('click', () => renameConfig(type, item.id));
+
+          const deleteButton = document.createElement('button');
+          deleteButton.type = 'button';
+          deleteButton.className = 'small-btn danger-btn';
+          deleteButton.textContent = '删除';
+          deleteButton.addEventListener('click', () => deleteConfig(type, item.id));
+
+          buttons.append(loadButton, renameButton, deleteButton);
+          row.append(info, buttons);
+          container.appendChild(row);
+        });
+      });
+    }
+
+    function updateClaude() {
+      if (!requiredFieldsComplete('claude')) {
+        setOutputContent('claudeOutput', emptyOutputMessage('claude'), true);
+        return;
+      }
+      const config = {
+        env: {
+          ANTHROPIC_BASE_URL: getValue('claudeBaseUrl'),
+          ANTHROPIC_AUTH_TOKEN: getValue('claudeApiKey'),
+          ANTHROPIC_MODEL: getValue('claudeModel'),
+          ANTHROPIC_CUSTOM_MODEL_OPTION: getValue('claudeModel'),
+          ANTHROPIC_CUSTOM_MODEL_OPTION_NAME: getValue('claudeModel'),
+          CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1'
+        }
+      };
+      setOutputContent('claudeOutput', jsonObject(config), false);
+    }
+
+    function updateCodex() {
+      const provider = cleanTomlKey(getValue('codexProvider'));
+      const model = getValue('codexModel');
+      const baseUrl = getValue('codexBaseUrl');
+      const context = positiveInteger(getValue('codexContext'), 200000);
+      const compact = positiveInteger(getValue('codexCompact'), Math.floor(context * 0.8));
+      const apiKey = getValue('codexApiKey');
+
+      if (!requiredFieldsComplete('codex')) {
+        setOutputContent('codexEnvOutput', emptyOutputMessage('codex'), true);
+        setOutputContent('codexOutput', emptyOutputMessage('codex'), true);
+        return;
+      }
+
+      setOutputContent(
+        'codexEnvOutput',
+        '[System.Environment]::SetEnvironmentVariable("OPENAI_API_KEY", ' + psString(apiKey) + ', "User")',
+        false
+      );
+
+      setOutputContent('codexOutput', [
+        'model = ' + tomlString(model),
+        'model_provider = ' + tomlString(provider),
+        'model_context_window = ' + context,
+        'model_auto_compact_token_limit = ' + compact,
+        'disable_response_storage = true',
+        '',
+        '[model_providers.' + provider + ']',
+        'name = ' + tomlString(provider),
+        'base_url = ' + tomlString(baseUrl),
+        'env_key = "OPENAI_API_KEY"',
+        'wire_api = "responses"',
+        'requires_openai_auth = true'
+      ].join('\n'), false);
+    }
+
+    function updateGemini() {
+      const apiKey = getValue('geminiApiKey');
+      const baseUrl = getValue('geminiBaseUrl');
+      const model = getValue('geminiModel');
+      if (!requiredFieldsComplete('gemini')) {
+        setOutputContent('geminiOutput', emptyOutputMessage('gemini'), true);
+        return;
+      }
+      setOutputContent('geminiOutput', [
+        '[System.Environment]::SetEnvironmentVariable("GEMINI_API_KEY", ' + psString(apiKey) + ', "User")',
+        '[System.Environment]::SetEnvironmentVariable("GOOGLE_GEMINI_BASE_URL", ' + psString(baseUrl) + ', "User")',
+        '',
+        'gemini --model ' + model
+      ].join('\n'), false);
+    }
+
+    async function copyText(id) {
+      if (!ensureReadyForCopy(id)) {
+        return;
+      }
+      const text = document.getElementById(id).textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast(copySuccessMessage(id));
+      } catch (error) {
+        showToast('复制失败，请手动选择文本');
+      }
+    }
+
+    function copySuccessMessage(id) {
+      return {
+        claudeOutput: 'Claude 配置已复制',
+        codexEnvOutput: 'Codex 环境变量命令已复制',
+        codexOutput: 'Codex 配置已复制',
+        geminiOutput: 'Gemini 配置命令已复制'
+      }[id] || '已复制';
+    }
+
+    function simpleValue(id) {
+      return document.getElementById(id).value.trim();
+    }
+
+    function simpleReady(type) {
+      return ['BaseUrl', 'ApiKey', 'Model'].every((name) => simpleValue('simple' + capitalize(type) + name));
+    }
+
+    function simpleMissingFields(type) {
+      return [
+        ['BaseUrl', 'Base URL'],
+        ['ApiKey', 'API Key'],
+        ['Model', '模型名']
+      ].filter(([name]) => !simpleValue('simple' + capitalize(type) + name)).map(([, label]) => label);
+    }
+
+    function getSimpleFormData(type) {
+      const data = {};
+      const map = simpleFieldMap[type] || {};
+      Object.keys(map).forEach((simpleId) => {
+        data[map[simpleId]] = simpleValue(simpleId);
+      });
+      if (type === 'codex') {
+        data.codexContextPreset = '200000';
+        data.codexProvider = 'third_party';
+        data.codexContext = '200000';
+        data.codexCompact = '160000';
+      }
+      return data;
+    }
+
+    function setSimpleFormData(type, data) {
+      const map = simpleFieldMap[type] || {};
+      Object.keys(map).forEach((simpleId) => {
+        const element = document.getElementById(simpleId);
+        if (element) {
+          element.value = data && data[map[simpleId]] ? data[map[simpleId]] : '';
+        }
+      });
+      updateSimpleConfig();
+    }
+
+    function saveSimpleConfig(type) {
+      const missing = simpleMissingFields(type);
+      if (missing.length > 0) {
+        showToast('缺少字段，未保存：' + missing.join('、'));
+        return;
+      }
+      const nameInput = document.getElementById('simple' + capitalize(type) + 'SaveName');
+      const name = nameInput.value.trim() || defaultSaveName(type);
+      const saved = readSavedConfigs();
+      const list = Array.isArray(saved[type]) ? saved[type] : [];
+      const now = new Date().toISOString();
+      list.unshift({
+        id: Date.now() + '-' + Math.random().toString(36).slice(2, 9),
+        name,
+        createdAt: now,
+        updatedAt: now,
+        test: null,
+        data: getSimpleFormData(type)
+      });
+      saved[type] = list.slice(0, 30);
+      writeSavedConfigs(saved);
+      renderSavedLists();
+      showToast('已保存到本地列表');
+    }
+
+    function loadSimpleConfig(type, id) {
+      const saved = readSavedConfigs();
+      const list = Array.isArray(saved[type]) ? saved[type] : [];
+      const item = list.find((entry) => entry.id === id);
+      if (!item) {
+        showToast('未找到保存项');
+        renderSavedLists();
+        return;
+      }
+      item.lastUsedAt = new Date().toISOString();
+      writeSavedConfigs(saved);
+      const nameInput = document.getElementById('simple' + capitalize(type) + 'SaveName');
+      if (nameInput) {
+        nameInput.value = item.name || defaultSaveName(type);
+      }
+      setSimpleFormData(type, item.data || {});
+      switchSimplePage(type);
+      renderSavedLists();
+      showToast('已载入到精简版');
+    }
+
+    function setSimpleOutput(id, text, empty) {
+      setOutputContent(id, text, empty);
+    }
+
+    function updateSimpleConfig() {
+      const empty = '填写 Base URL、API Key 和模型名后自动生成。';
+      const claudeReady = simpleReady('claude');
+      if (claudeReady) {
+        setSimpleOutput('simpleClaudeOutput', jsonObject({
+          env: {
+            ANTHROPIC_BASE_URL: simpleValue('simpleClaudeBaseUrl'),
+            ANTHROPIC_AUTH_TOKEN: simpleValue('simpleClaudeApiKey'),
+            ANTHROPIC_MODEL: simpleValue('simpleClaudeModel'),
+            ANTHROPIC_CUSTOM_MODEL_OPTION: simpleValue('simpleClaudeModel'),
+            ANTHROPIC_CUSTOM_MODEL_OPTION_NAME: simpleValue('simpleClaudeModel'),
+            CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1'
+          }
+        }), false);
+      } else {
+        setSimpleOutput('simpleClaudeOutput', empty, true);
+      }
+
+      const codexReady = simpleReady('codex');
+      if (codexReady) {
+        setSimpleOutput('simpleCodexEnvOutput', '[System.Environment]::SetEnvironmentVariable("OPENAI_API_KEY", ' + psString(simpleValue('simpleCodexApiKey')) + ', "User")', false);
+        setSimpleOutput('simpleCodexOutput', [
+          'model = ' + tomlString(simpleValue('simpleCodexModel')),
+          'model_provider = "third_party"',
+          'model_context_window = 200000',
+          'model_auto_compact_token_limit = 160000',
+          'disable_response_storage = true',
+          '',
+          '[model_providers.third_party]',
+          'name = "third_party"',
+          'base_url = ' + tomlString(simpleValue('simpleCodexBaseUrl')),
+          'env_key = "OPENAI_API_KEY"',
+          'wire_api = "responses"',
+          'requires_openai_auth = true'
+        ].join('\n'), false);
+      } else {
+        setSimpleOutput('simpleCodexEnvOutput', empty, true);
+        setSimpleOutput('simpleCodexOutput', empty, true);
+      }
+
+      const geminiReady = simpleReady('gemini');
+      if (geminiReady) {
+        setSimpleOutput('simpleGeminiOutput', [
+          '[System.Environment]::SetEnvironmentVariable("GEMINI_API_KEY", ' + psString(simpleValue('simpleGeminiApiKey')) + ', "User")',
+          '[System.Environment]::SetEnvironmentVariable("GOOGLE_GEMINI_BASE_URL", ' + psString(simpleValue('simpleGeminiBaseUrl')) + ', "User")',
+          '',
+          'gemini --model ' + simpleValue('simpleGeminiModel')
+        ].join('\n'), false);
+      } else {
+        setSimpleOutput('simpleGeminiOutput', empty, true);
+      }
+    }
+
+    async function copySimpleOutput(type) {
+      const map = {
+        claude: ['simpleClaudeOutput', 'claude'],
+        codexEnv: ['simpleCodexEnvOutput', 'codex'],
+        codex: ['simpleCodexOutput', 'codex'],
+        gemini: ['simpleGeminiOutput', 'gemini']
+      };
+      const target = map[type];
+      if (!target) return;
+      const [id, cli] = target;
+      if (!simpleReady(cli)) {
+        ['BaseUrl', 'ApiKey', 'Model'].forEach((name) => {
+          const field = document.getElementById('simple' + capitalize(cli) + name);
+          if (field && !field.value.trim()) field.classList.add('field-attention');
+        });
+        showToast('请先填写精简版必填字段');
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(document.getElementById(id).textContent);
+        showToast('精简版内容已复制');
+      } catch (error) {
+        showToast('复制失败，请手动选择文本');
+      }
+    }
+
+    let toastTimer;
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 1600);
+    }
+
+    function updateAll() {
+      updateClaude();
+      updateCodex();
+      updateGemini();
+      validateClaude();
+      validateCodex();
+      validateGemini();
+      renderFlowSummary();
+      renderFinalChecklist();
+    }
+
+    document.querySelectorAll('input').forEach((input) => {
+      if (input.id.endsWith('SaveName')) {
+        return;
+      }
+      input.addEventListener('input', () => {
+        input.classList.remove('field-attention');
+        updateAll();
+      });
+    });
+
+    document.getElementById('codexContextPreset').addEventListener('change', applyCodexPreset);
+    document.getElementById('codexContext').addEventListener('input', setCodexPresetFromValues);
+    document.getElementById('codexCompact').addEventListener('input', setCodexPresetFromValues);
+    document.getElementById('importConfigFile').addEventListener('change', (event) => {
+      importSavedConfigs(event.target.files && event.target.files[0]);
+    });
+
+    document.querySelectorAll('input[id^="simple"]').forEach((input) => {
+      input.addEventListener('input', () => {
+        input.classList.remove('field-attention');
+        updateSimpleConfig();
+      });
+    });
+
+    updateAll();
+    setCodexPresetFromValues();
+    renderSavedLists();
+    renderFlowWizard();
+    updateSimpleConfig();
+    switchTutorialMode(localStorage.getItem('cliTutorialMode') || 'detailed');
+
+    // 折叠面板功能
+    function toggleCollapsible(header) {
+      const content = header.nextElementSibling;
+      const isActive = header.classList.contains('active');
+
+      if (isActive) {
+        header.classList.remove('active');
+        content.classList.remove('active');
+      } else {
+        header.classList.add('active');
+        content.classList.add('active');
+      }
+    }
+  </script>
+</body>
+
+</html>
